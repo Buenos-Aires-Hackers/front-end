@@ -160,6 +160,16 @@ export async function markEventProcessed(eventId: string) {
  */
 export function extractListingIdFromOrder(order: any): string | null {
   try {
+    // First check note_attributes (most reliable)
+    if (order.note_attributes && Array.isArray(order.note_attributes)) {
+      for (const attr of order.note_attributes) {
+        if (attr.name === "listing_id" && attr.value) {
+          console.log("Found listing_id in note_attributes:", attr.value);
+          return attr.value.toString();
+        }
+      }
+    }
+
     // Check line items for listing ID in properties or SKU
     for (const lineItem of order.line_items || []) {
       // Check custom properties
@@ -208,9 +218,18 @@ export async function getCreatorFromListing(
   try {
     const supabaseInstance = supabase;
 
+    // Join listings with users to get the creator's wallet address
     const { data, error } = await supabaseInstance
       .from("listings")
-      .select("wallet_address")
+      .select(
+        `
+        id,
+        ordered_by_user_id,
+        users!listings_ordered_by_user_id_fkey (
+          wallet_address
+        )
+      `
+      )
       .eq("id", listingId)
       .single();
 
@@ -219,7 +238,18 @@ export async function getCreatorFromListing(
       return null;
     }
 
-    return data?.wallet_address || null;
+    // Handle case where listing has no creator assigned
+    if (!data?.users) {
+      console.warn(`No creator found for listing ${listingId}`);
+      return "unknown"; // Return placeholder for now
+    }
+
+    const walletAddress = (data.users as any)?.wallet_address;
+    console.log(
+      `Found creator wallet for listing ${listingId}:`,
+      walletAddress
+    );
+    return walletAddress || "unknown";
   } catch (error) {
     console.error("Error getting creator from listing:", error);
     return null;
@@ -232,10 +262,11 @@ export async function getCreatorFromListing(
  */
 export function extractPurchaserFromOrder(order: any): string | null {
   try {
-    // Check note attributes from checkout
-    if (order.note_attributes) {
+    // First check note_attributes (most reliable)
+    if (order.note_attributes && Array.isArray(order.note_attributes)) {
       for (const attr of order.note_attributes) {
-        if (attr.name === "wallet_address" || attr.name === "Wallet Address") {
+        if (attr.name === "wallet_address" && attr.value) {
+          console.log("Found wallet_address in note_attributes:", attr.value);
           return attr.value;
         }
       }

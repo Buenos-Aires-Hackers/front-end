@@ -2,6 +2,9 @@ import { orderService } from "@/lib/order-service";
 import { supabase } from "@/lib/supabase";
 import { OrderPaidPayload } from "@/lib/types/shopify-webhooks";
 import {
+  extractListingIdFromOrder,
+  extractPurchaserFromOrder,
+  getCreatorFromListing,
   logWebhookEvent,
   markEventProcessed,
   validateWebhookRequest,
@@ -64,11 +67,19 @@ export async function POST(request: NextRequest) {
     if (!result.success && result.error?.includes("No rows")) {
       console.log("Order not found, creating new order record");
 
+      // Extract data from order payload
+      const listingId = extractListingIdFromOrder(orderData);
+      const purchaserWallet = extractPurchaserFromOrder(orderData);
+      const creatorWallet = listingId
+        ? await getCreatorFromListing(listingId)
+        : null;
+
       const orderRecord = {
         shopify_order_id: orderData.id,
         shopify_checkout_id: orderData.checkout_id?.toString(),
-        purchaser_wallet_address: "unknown", // Will be updated when we have proper extraction
-        creator_wallet_address: "unknown",
+        listing_id: listingId || undefined, // Convert null to undefined
+        purchaser_wallet_address: purchaserWallet || "unknown",
+        creator_wallet_address: creatorWallet || "unknown",
         order_status: "paid" as const,
         financial_status: orderData.financial_status,
         fulfillment_status: orderData.fulfillment_status || "unfulfilled",
@@ -81,6 +92,18 @@ export async function POST(request: NextRequest) {
       };
 
       result = await orderService.upsertOrder(orderRecord);
+
+      // Update listing status if we have a listing_id
+      if (listingId) {
+        await supabase
+          .from("listings")
+          .update({
+            status: "sold",
+            purchased_at: new Date().toISOString(),
+            purchaser_email: orderData.email,
+          })
+          .eq("id", listingId);
+      }
     }
 
     if (!result.success) {

@@ -1,4 +1,5 @@
 import { orderService } from "@/lib/order-service";
+import { supabase } from "@/lib/supabase";
 import { OrderCreatedPayload } from "@/lib/types/shopify-webhooks";
 import {
   extractListingIdFromOrder,
@@ -94,14 +95,35 @@ export async function POST(request: NextRequest) {
       orderStatus = "paid";
     }
 
+    // Update listing with Shopify product ID for future reference
+    const productId = orderData.line_items?.[0]?.product_id;
+    if (productId) {
+      const { error: updateError } = await supabase
+        .from("listings")
+        .update({
+          shopify_product_id: productId.toString(),
+          last_order_at: new Date().toISOString(),
+        })
+        .eq("id", listingId);
+
+      if (updateError) {
+        console.error("Error updating listing with product ID:", updateError);
+      }
+    }
+
     // Create order record
     const orderRecord = {
       shopify_order_id: orderData.id,
       shopify_checkout_id: orderData.checkout_id?.toString(),
-      listing_id: listingId,
+      listing_id: listingId, // Keep as string to match ShopifyOrderRecord type
       purchaser_wallet_address: purchaserWalletAddress,
       creator_wallet_address: creatorWalletAddress,
-      order_status: orderStatus,
+      order_status: orderStatus as
+        | "pending"
+        | "paid"
+        | "fulfilled"
+        | "cancelled"
+        | "refunded",
       financial_status: orderData.financial_status,
       fulfillment_status: orderData.fulfillment_status || "unfulfilled",
       total_price: parseFloat(orderData.total_price),
