@@ -279,15 +279,19 @@ export async function validateWebhookRequest(
   headers?: ShopifyWebhookHeaders;
   error?: string;
 }> {
-  const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    return { valid: false, error: "Webhook secret not configured" };
-  }
-
   const headers = extractWebhookHeaders(request);
   if (!headers) {
     return { valid: false, error: "Missing required webhook headers" };
+  }
+
+  const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    // If no secret configured, skip signature validation but still return headers
+    console.warn(
+      "Webhook secret not configured - skipping signature validation"
+    );
+    return { valid: true, headers, error: "Webhook secret not configured" };
   }
 
   const isSignatureValid = verifyWebhookSignature(

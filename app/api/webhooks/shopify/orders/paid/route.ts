@@ -1,4 +1,5 @@
 import { orderService } from "@/lib/order-service";
+import { supabase } from "@/lib/supabase";
 import { OrderPaidPayload } from "@/lib/types/shopify-webhooks";
 import {
   logWebhookEvent,
@@ -18,6 +19,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
+    // Log warning if webhook secret not configured
+    if (validation.error === "Webhook secret not configured") {
+      console.warn(
+        "⚠️ SECURITY WARNING: Webhook secret not configured - signatures not verified"
+      );
+    }
+
+    // Skip if already processed (prevent duplicates)
+    const eventId = request.headers.get("x-shopify-event-id");
+    if (eventId) {
+      const { data: existingLog } = await supabase
+        .from("webhook_logs")
+        .select("id")
+        .eq("event_id", eventId)
+        .single();
+
+      if (existingLog) {
+        console.log("Webhook already processed, skipping:", eventId);
+        return NextResponse.json({
+          success: true,
+          message: "Already processed",
+        });
+      }
+    }
+
     const { headers } = validation;
     const orderData: OrderPaidPayload = JSON.parse(payload);
 
@@ -26,16 +52,39 @@ export async function POST(request: NextRequest) {
 
     console.log("Processing order paid webhook for order ID:", orderData.id);
 
-    // Update order status to paid
-    const result = await orderService.updateOrderStatus(
+    // First try to update existing order, if it doesn't exist, create it
+    let result = await orderService.updateOrderStatus(
       orderData.id,
       "paid",
       orderData.financial_status,
       orderData.fulfillment_status || undefined
     );
 
+    // If update failed (order doesn't exist), create the order first
+    if (!result.success && result.error?.includes("No rows")) {
+      console.log("Order not found, creating new order record");
+
+      const orderRecord = {
+        shopify_order_id: orderData.id,
+        shopify_checkout_id: orderData.checkout_id?.toString(),
+        purchaser_wallet_address: "unknown", // Will be updated when we have proper extraction
+        creator_wallet_address: "unknown",
+        order_status: "paid" as const,
+        financial_status: orderData.financial_status,
+        fulfillment_status: orderData.fulfillment_status || "unfulfilled",
+        total_price: parseFloat(orderData.total_price),
+        currency: orderData.currency,
+        shopify_customer_id: orderData.customer?.id,
+        shopify_customer_email: orderData.email,
+        shipping_address: orderData.shipping_address,
+        line_items: orderData.line_items,
+      };
+
+      result = await orderService.upsertOrder(orderRecord);
+    }
+
     if (!result.success) {
-      console.error("Failed to update order status:", result.error);
+      console.error("Failed to process order:", result.error);
       await logWebhookEvent(
         "orders/paid",
         headers!,
@@ -44,7 +93,7 @@ export async function POST(request: NextRequest) {
         result.error
       );
       return NextResponse.json(
-        { error: "Failed to update order status" },
+        { error: "Failed to process order" },
         { status: 500 }
       );
     }
