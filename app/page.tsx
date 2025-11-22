@@ -1,65 +1,88 @@
-import Image from "next/image";
+"use client";
+
+import CreateOrderModal from "@/components/create-order-modal";
+import ListingsGrid from "@/components/listings-grid";
+import Navbar from "@/components/navbar";
+import { Button } from "@/components/ui/button";
+import { Plus, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useAppKitAccount } from "@reown/appkit/react";
 
 export default function Home() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { allAccounts } = useAppKitAccount();
+  const connectedAddress = useMemo(() => allAccounts[0]?.address, [allAccounts]);
+
+  const handleModalToggle = (state: boolean) => {
+    setIsModalOpen(state);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-gradient-to-b from-[#050505] via-[#020202] to-black text-white">
+      <Navbar />
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-12">
+        <div className="flex flex-col gap-6 rounded-3xl border border-emerald-400/10 bg-black/40 p-6 shadow-[0_10px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <span className="text-sm font-semibold uppercase tracking-[0.4em] text-emerald-300">
+              Home
+            </span>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex w-full items-center gap-3 rounded-2xl border border-emerald-400/40 bg-black/60 px-4 py-3 text-base text-white sm:w-96">
+                <Search className="h-5 w-5 text-emerald-200" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search products..."
+                  className="w-full bg-transparent text-base text-white placeholder:text-zinc-600 focus:outline-none"
+                />
+              </div>
+              <Button
+                onClick={() => handleModalToggle(true)}
+                className="rounded-2xl border border-emerald-400 bg-transparent text-emerald-200 transition-colors hover:bg-emerald-400/10"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Order
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <h1 className="text-4xl font-semibold tracking-tight text-white">
+              Curated drops from verified shoppers
+            </h1>
+            <p className="mt-3 text-lg text-zinc-400">
+              Discover rare products, submit new orders, and let the EthStore
+              collective hunt them down for you.
+            </p>
+          </div>
+
+          {successMessage && (
+            <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-emerald-100">
+              {successMessage}
+            </div>
+          )}
+        </div>
+
+        <ListingsGrid
+          className="pt-4"
+          inStock={true}
+          orderBy="created_at"
+          orderDirection="desc"
+          limit={12}
+          showTitle={false}
+          searchTerm={searchTerm}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
       </main>
+
+      <CreateOrderModal
+        isOpen={isModalOpen}
+        onClose={() => handleModalToggle(false)}
+        onSuccess={(message) => setSuccessMessage(message)}
+        connectedAddress={connectedAddress}
+      />
     </div>
   );
 }

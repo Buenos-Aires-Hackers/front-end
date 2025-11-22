@@ -1,0 +1,56 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "ethbuenos"
+client_id = "YOUR_CLIENT_ID"
+application_url = "https://your-app-domain.com"
+embedded = true
+
+[access_scopes]
+# Required for reading and managing orders
+scopes = "read_orders,write_orders,read_products,read_customers"
+
+[auth]
+redirect_urls = [
+  "https://your-app-domain.com/auth/callback",
+]
+
+[webhooks]
+api_version = "2025-01"
+
+# Phase 1 Critical Webhooks - Order Lifecycle
+[webhooks.orders_create]
+endpoint = "/api/webhooks/orders/create"
+
+[webhooks.orders_paid]
+endpoint = "/api/webhooks/orders/paid"
+
+[webhooks.orders_updated]
+endpoint = "/api/webhooks/orders/updated"
+
+[webhooks.orders_cancelled]
+endpoint = "/api/webhooks/orders/cancelled"
+
+[webhooks.orders_fulfilled]
+endpoint = "/api/webhooks/orders/fulfilled"
+
+# Phase 1 Critical Webhooks - Fulfillment & Payment
+[webhooks.fulfillments_create]
+endpoint = "/api/webhooks/fulfillments/create"
+
+[webhooks.fulfillments_update]
+endpoint = "/api/webhooks/fulfillments/update"
+
+[webhooks.orders_transactions_create]
+endpoint = "/api/webhooks/transactions/create"
+
+[pos]
+embedded = false
+
+[[build.include_config_on_deploy]]
+path = "shopify.app.toml"
+
+[build.automatically_update_urls_on_dev]
+enabled = true
+
+[build.dev_store_url]
+url = "https://your-dev-store.myshopify.com"
