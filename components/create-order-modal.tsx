@@ -1,11 +1,13 @@
 "use client";
 
 import { useCreateListing } from "@/app/hooks/useListingMutations";
+import { useOrderCreatorAddress } from "@/app/hooks/useOrderCreatorAddress";
 import { useShopifyProduct } from "@/app/hooks/useShopifyProduct";
 import { Button } from "@/components/ui/button";
 import { humanizeShopifyHandle } from "@/lib/shopify";
+import type { UserAddress } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface CreateOrderModalProps {
   isOpen: boolean;
@@ -26,6 +28,18 @@ const DEFAULT_FORM: FormValues = {
   price: "",
   deliveryAddress: "",
   deliveryCountry: "",
+};
+
+const formatSavedAddress = (address: UserAddress) => {
+  const parts = [
+    address.address_line_1,
+    address.address_line_2,
+    address.city,
+    address.state_province,
+    address.postal_code,
+  ].filter(Boolean);
+
+  return parts.join(", ");
 };
 
 const formatUserPrice = (value: string) => {
@@ -61,6 +75,36 @@ export default function CreateOrderModal({
   const [formError, setFormError] = useState<string | null>(null);
   const { createListing, isCreating } = useCreateListing();
   const { fetchProduct, isFetchingProduct } = useShopifyProduct();
+  const { address: savedAddress } = useOrderCreatorAddress(connectedAddress);
+
+  useEffect(() => {
+    if (!savedAddress) {
+      return;
+    }
+
+    const formattedAddress = formatSavedAddress(savedAddress);
+
+    setFormValues((prev) => {
+      const shouldUpdateAddress =
+        !prev.deliveryAddress && Boolean(formattedAddress);
+      const shouldUpdateCountry =
+        !prev.deliveryCountry && Boolean(savedAddress.country);
+
+      if (!shouldUpdateAddress && !shouldUpdateCountry) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        deliveryAddress: shouldUpdateAddress
+          ? formattedAddress
+          : prev.deliveryAddress,
+        deliveryCountry: shouldUpdateCountry
+          ? savedAddress.country || prev.deliveryCountry
+          : prev.deliveryCountry,
+      };
+    });
+  }, [savedAddress]);
 
   if (!isOpen) return null;
 
