@@ -28,6 +28,9 @@ export interface Listing {
   deadline?: string;
   notes?: string;
   user_id?: string;
+  purchased_by?: string; // Wallet address of who fulfilled the order
+  purchased_at?: string;
+  purchaser_email?: string;
   created_at?: string;
   updated_at?: string;
 }

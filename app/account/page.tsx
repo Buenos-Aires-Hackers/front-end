@@ -175,48 +175,53 @@ export default function AccountPage() {
 
     return (
       <div className="space-y-3">
-        {requests.map((request) => (
-          <div
-            key={request.id}
-            className="rounded-2xl border border-white/10 bg-black/30 p-4"
-          >
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex-1  max-w-fit">
-                <p className="text-lg  font-semibold text-white">
-                  {request.title}
-                </p>
+        {requests.map((request) => {
+          if (request.status !== "open") return null;
+          return (
+            <div
+              key={request.id}
+              className="rounded-2xl border border-white/10 bg-black/30 p-4"
+            >
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="flex-1  max-w-fit">
+                  <p className="text-lg  font-semibold text-white">
+                    {request.title}
+                  </p>
 
-                {request.url && (
-                  <a
-                    href={request.url}
-                    className="text-sm w-[40%] overflow-hidden text-zinc-400 mt-1 line-clamp-2"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Check item
-                  </a>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-base text-emerald-300">
-                    Budget {request.max_budget ?? request.price ?? "--"}
-                  </p>
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">
-                    {request.category ?? "general"}
-                  </p>
+                  {request.url && (
+                    <a
+                      href={request.url}
+                      className="text-sm w-[40%] overflow-hidden text-zinc-400 mt-1 line-clamp-2"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Check item
+                    </a>
+                  )}
                 </div>
-                <button
-                  onClick={() => handleDeleteRequest(request.id)}
-                  className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-900/20 transition-colors"
-                  title="Delete request"
-                >
-                  🗑️
-                </button>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-base text-emerald-300">
+                      Budget {request.max_budget ?? request.price ?? "--"}
+                    </p>
+                    <p className="text-xs uppercase tracking-wide text-zinc-500">
+                      {request.category ?? "general"}
+                    </p>
+                  </div>
+                  {request.status !== "open" && (
+                    <button
+                      onClick={() => handleDeleteRequest(request.id)}
+                      className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-900/20 transition-colors"
+                      title="Delete request"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -367,22 +372,9 @@ export default function AccountPage() {
                 </span>
               </div>
 
-              {data?.listings && data.listings.length > 0 ? (
-                renderRequests(data.listings)
-              ) : (
-                <div className="p-4 rounded-2xl border border-yellow-400/30 bg-yellow-900/10">
-                  <p className="text-sm text-yellow-300">
-                    No listings found. Total listings in database:{" "}
-                    {data?.listings?.length ?? 0}
-                  </p>
-                  {data?.listings && data.listings.length > 0 && (
-                    <p className="text-xs text-zinc-400 mt-1">
-                      Debug: Found {data.listings.length} listings but none
-                      match current user
-                    </p>
-                  )}
-                </div>
-              )}
+              {data?.listings &&
+                data.listings.length > 0 &&
+                renderRequests(data.listings)}
             </section>
           </div>
         )}

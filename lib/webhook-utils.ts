@@ -218,18 +218,10 @@ export async function getCreatorFromListing(
   try {
     const supabaseInstance = supabase;
 
-    // Join listings with users to get the creator's wallet address
+    // Get the creator's wallet address directly from the ordered_by field
     const { data, error } = await supabaseInstance
       .from("listings")
-      .select(
-        `
-        id,
-        ordered_by_user_id,
-        users!listings_ordered_by_user_id_fkey (
-          wallet_address
-        )
-      `
-      )
+      .select("id, ordered_by")
       .eq("id", listingId)
       .single();
 
@@ -239,12 +231,12 @@ export async function getCreatorFromListing(
     }
 
     // Handle case where listing has no creator assigned
-    if (!data?.users) {
+    if (!data?.ordered_by) {
       console.warn(`No creator found for listing ${listingId}`);
       return "unknown"; // Return placeholder for now
     }
 
-    const walletAddress = (data.users as any)?.wallet_address;
+    const walletAddress = data.ordered_by;
     console.log(
       `Found creator wallet for listing ${listingId}:`,
       walletAddress

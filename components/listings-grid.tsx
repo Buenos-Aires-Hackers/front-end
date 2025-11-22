@@ -10,6 +10,7 @@ import ProductCard from "./product-card";
 interface ListingsGridProps {
   category?: string;
   inStock?: boolean;
+  hideAvailable?: boolean;
   orderBy?: "created_at" | "price" | "rating" | "title";
   orderDirection?: "asc" | "desc";
   limit?: number;
@@ -22,6 +23,7 @@ interface ListingsGridProps {
 export default function ListingsGrid({
   category,
   inStock = true,
+  hideAvailable = false,
   orderBy = "created_at",
   orderDirection = "desc",
   limit = 12,
@@ -37,6 +39,7 @@ export default function ListingsGrid({
   const { listings, isLoading, error } = useListings({
     category,
     inStock,
+    hideAvailable,
     orderBy,
     orderDirection,
     limit,

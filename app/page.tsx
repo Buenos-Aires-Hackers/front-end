@@ -3,17 +3,21 @@
 import CreateOrderModal from "@/components/create-order-modal";
 import ListingsGrid from "@/components/listings-grid";
 import Navbar from "@/components/navbar";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import { Button } from "@/components/ui/button";
+import { useAppKitAccount } from "@reown/appkit/react";
 import { Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useAppKitAccount } from "@reown/appkit/react";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { allAccounts } = useAppKitAccount();
-  const connectedAddress = useMemo(() => allAccounts[0]?.address, [allAccounts]);
+  const connectedAddress = useMemo(
+    () => allAccounts[0]?.address,
+    [allAccounts]
+  );
 
   const handleModalToggle = (state: boolean) => {
     setIsModalOpen(state);
@@ -69,6 +73,7 @@ export default function Home() {
         <ListingsGrid
           className="pt-4"
           inStock={true}
+          hideAvailable={true}
           orderBy="created_at"
           orderDirection="desc"
           limit={12}
@@ -83,6 +88,7 @@ export default function Home() {
         onSuccess={(message) => setSuccessMessage(message)}
         connectedAddress={connectedAddress}
       />
+      <OnboardingModal />
     </div>
   );
 }

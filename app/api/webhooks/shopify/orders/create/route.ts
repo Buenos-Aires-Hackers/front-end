@@ -95,20 +95,27 @@ export async function POST(request: NextRequest) {
       orderStatus = "paid";
     }
 
-    // Update listing with Shopify product ID for future reference
+    // Update listing with Shopify product ID and mark as sold
     const productId = orderData.line_items?.[0]?.product_id;
-    if (productId) {
-      const { error: updateError } = await supabase
-        .from("listings")
-        .update({
-          shopify_product_id: productId.toString(),
-          last_order_at: new Date().toISOString(),
-        })
-        .eq("id", listingId);
+    const updateData: any = {
+      status: "sold",
+      in_stock: false,
+      purchased_at: new Date().toISOString(),
+      purchaser_email: orderData.email,
+      purchased_by: purchaserWalletAddress, // Track who fulfilled the order
+      last_order_at: new Date().toISOString(),
+    };
 
-      if (updateError) {
-        console.error("Error updating listing with product ID:", updateError);
-      }
+    if (productId) {
+      updateData.shopify_product_id = productId.toString();
+    }
+    const { error: updateError } = await supabase
+      .from("listings")
+      .update(updateData)
+      .eq("id", listingId);
+
+    if (updateError) {
+      console.error("Error updating listing status:", updateError);
     }
 
     // Create order record

@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
 
     console.log("Processing order paid webhook for order ID:", orderData.id);
 
+    // Extract listing ID to update status
+    const listingId = extractListingIdFromOrder(orderData);
+
     // First try to update existing order, if it doesn't exist, create it
     let result = await orderService.updateOrderStatus(
       orderData.id,
@@ -68,7 +71,6 @@ export async function POST(request: NextRequest) {
       console.log("Order not found, creating new order record");
 
       // Extract data from order payload
-      const listingId = extractListingIdFromOrder(orderData);
       const purchaserWallet = extractPurchaserFromOrder(orderData);
       const creatorWallet = listingId
         ? await getCreatorFromListing(listingId)
@@ -92,17 +94,27 @@ export async function POST(request: NextRequest) {
       };
 
       result = await orderService.upsertOrder(orderRecord);
+    }
 
-      // Update listing status if we have a listing_id
-      if (listingId) {
-        await supabase
-          .from("listings")
-          .update({
-            status: "sold",
-            purchased_at: new Date().toISOString(),
-            purchaser_email: orderData.email,
-          })
-          .eq("id", listingId);
+    // Always update listing status to sold when order is paid (regardless of order creation)
+    if (listingId) {
+      const purchaserWallet = extractPurchaserFromOrder(orderData);
+      const { error: listingUpdateError } = await supabase
+        .from("listings")
+        .update({
+          status: "sold",
+          in_stock: false,
+          purchased_at: new Date().toISOString(),
+          purchaser_email: orderData.email,
+          purchased_by: purchaserWallet || "unknown", // Track who fulfilled the order
+        })
+        .eq("id", listingId);
+
+      if (listingUpdateError) {
+        console.error(
+          "Error updating listing status to sold:",
+          listingUpdateError
+        );
       }
     }
 
