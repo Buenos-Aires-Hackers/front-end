@@ -1,7 +1,7 @@
-import crypto from 'crypto';
-import { NextRequest } from 'next/server';
-import { ShopifyWebhookHeaders } from './types/shopify-webhooks';
-
+import crypto from "crypto";
+import { NextRequest } from "next/server";
+import { supabase } from "./supabase";
+import { ShopifyWebhookHeaders } from "./types/shopify-webhooks";
 /**
  * Verify Shopify webhook HMAC signature
  */
@@ -11,16 +11,16 @@ export function verifyWebhookSignature(
   secret: string
 ): boolean {
   try {
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(payload, 'utf8');
-    const calculatedSignature = hmac.digest('base64');
-    
+    const hmac = crypto.createHmac("sha256", secret);
+    hmac.update(payload, "utf8");
+    const calculatedSignature = hmac.digest("base64");
+
     return crypto.timingSafeEqual(
-      Buffer.from(signature, 'base64'),
-      Buffer.from(calculatedSignature, 'base64')
+      Buffer.from(signature, "base64"),
+      Buffer.from(calculatedSignature, "base64")
     );
   } catch (error) {
-    console.error('Error verifying webhook signature:', error);
+    console.error("Error verifying webhook signature:", error);
     return false;
   }
 }
@@ -28,26 +28,46 @@ export function verifyWebhookSignature(
 /**
  * Extract and normalize Shopify webhook headers
  */
-export function extractWebhookHeaders(request: NextRequest): ShopifyWebhookHeaders | null {
+export function extractWebhookHeaders(
+  request: NextRequest
+): ShopifyWebhookHeaders | null {
   try {
     const headers = {
-      'x-shopify-topic': request.headers.get('x-shopify-topic') || request.headers.get('X-Shopify-Topic'),
-      'x-shopify-hmac-sha256': request.headers.get('x-shopify-hmac-sha256') || request.headers.get('X-Shopify-Hmac-Sha256'),
-      'x-shopify-shop-domain': request.headers.get('x-shopify-shop-domain') || request.headers.get('X-Shopify-Shop-Domain'),
-      'x-shopify-api-version': request.headers.get('x-shopify-api-version') || request.headers.get('X-Shopify-API-Version'),
-      'x-shopify-webhook-id': request.headers.get('x-shopify-webhook-id') || request.headers.get('X-Shopify-Webhook-Id'),
-      'x-shopify-triggered-at': request.headers.get('x-shopify-triggered-at') || request.headers.get('X-Shopify-Triggered-At'),
-      'x-shopify-event-id': request.headers.get('x-shopify-event-id') || request.headers.get('X-Shopify-Event-Id'),
+      "x-shopify-topic":
+        request.headers.get("x-shopify-topic") ||
+        request.headers.get("X-Shopify-Topic"),
+      "x-shopify-hmac-sha256":
+        request.headers.get("x-shopify-hmac-sha256") ||
+        request.headers.get("X-Shopify-Hmac-Sha256"),
+      "x-shopify-shop-domain":
+        request.headers.get("x-shopify-shop-domain") ||
+        request.headers.get("X-Shopify-Shop-Domain"),
+      "x-shopify-api-version":
+        request.headers.get("x-shopify-api-version") ||
+        request.headers.get("X-Shopify-API-Version"),
+      "x-shopify-webhook-id":
+        request.headers.get("x-shopify-webhook-id") ||
+        request.headers.get("X-Shopify-Webhook-Id"),
+      "x-shopify-triggered-at":
+        request.headers.get("x-shopify-triggered-at") ||
+        request.headers.get("X-Shopify-Triggered-At"),
+      "x-shopify-event-id":
+        request.headers.get("x-shopify-event-id") ||
+        request.headers.get("X-Shopify-Event-Id"),
     };
 
     // Check if all required headers are present
-    if (!headers['x-shopify-topic'] || !headers['x-shopify-hmac-sha256'] || !headers['x-shopify-event-id']) {
+    if (
+      !headers["x-shopify-topic"] ||
+      !headers["x-shopify-hmac-sha256"] ||
+      !headers["x-shopify-event-id"]
+    ) {
       return null;
     }
 
     return headers as ShopifyWebhookHeaders;
   } catch (error) {
-    console.error('Error extracting webhook headers:', error);
+    console.error("Error extracting webhook headers:", error);
     return null;
   }
 }
@@ -57,23 +77,23 @@ export function extractWebhookHeaders(request: NextRequest): ShopifyWebhookHeade
  */
 export async function isEventProcessed(eventId: string): Promise<boolean> {
   try {
-    const supabase = await import('./supabase').then(m => m.createClient());
-    
-    const { data, error } = await supabase
-      .from('webhook_logs')
-      .select('id')
-      .eq('event_id', eventId)
-      .eq('processed', true)
+    const supabaseInstance = supabase;
+
+    const { data, error } = await supabaseInstance
+      .from("webhook_logs")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("processed", true)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking event processing status:', error);
+    if (error && error.code !== "PGRST116") {
+      console.error("Error checking event processing status:", error);
       return false;
     }
 
     return !!data;
   } catch (error) {
-    console.error('Error checking if event is processed:', error);
+    console.error("Error checking if event is processed:", error);
     return false;
   }
 }
@@ -89,28 +109,28 @@ export async function logWebhookEvent(
   error?: string
 ) {
   try {
-    const supabase = await import('./supabase').then(m => m.createClient());
-    
+    const supabaseInstance = supabase;
+
     const webhookLog = {
       webhook_topic: topic,
       shopify_order_id: payload.id || null,
-      webhook_id: headers['x-shopify-webhook-id'],
-      event_id: headers['x-shopify-event-id'],
-      shop_domain: headers['x-shopify-shop-domain'],
+      webhook_id: headers["x-shopify-webhook-id"],
+      event_id: headers["x-shopify-event-id"],
+      shop_domain: headers["x-shopify-shop-domain"],
       payload,
       processed,
       error_message: error || null,
     };
 
     const { error: insertError } = await supabase
-      .from('webhook_logs')
+      .from("webhook_logs")
       .insert([webhookLog]);
 
     if (insertError) {
-      console.error('Error logging webhook event:', insertError);
+      console.error("Error logging webhook event:", insertError);
     }
   } catch (error) {
-    console.error('Error logging webhook event:', error);
+    console.error("Error logging webhook event:", error);
   }
 }
 
@@ -119,18 +139,18 @@ export async function logWebhookEvent(
  */
 export async function markEventProcessed(eventId: string) {
   try {
-    const supabase = await import('./supabase').then(m => m.createClient());
-    
-    const { error } = await supabase
-      .from('webhook_logs')
+    const supabaseInstance = supabase;
+
+    const { error } = await supabaseInstance
+      .from("webhook_logs")
       .update({ processed: true })
-      .eq('event_id', eventId);
+      .eq("event_id", eventId);
 
     if (error) {
-      console.error('Error marking event as processed:', error);
+      console.error("Error marking event as processed:", error);
     }
   } catch (error) {
-    console.error('Error marking event as processed:', error);
+    console.error("Error marking event as processed:", error);
   }
 }
 
@@ -145,19 +165,19 @@ export function extractListingIdFromOrder(order: any): string | null {
       // Check custom properties
       if (lineItem.properties) {
         for (const prop of lineItem.properties) {
-          if (prop.name === 'listing_id' || prop.name === 'Listing ID') {
+          if (prop.name === "listing_id" || prop.name === "Listing ID") {
             return prop.value;
           }
         }
       }
 
       // Check SKU (if we encode listing ID in SKU)
-      if (lineItem.sku && lineItem.sku.startsWith('listing-')) {
-        return lineItem.sku.replace('listing-', '');
+      if (lineItem.sku && lineItem.sku.startsWith("listing-")) {
+        return lineItem.sku.replace("listing-", "");
       }
 
       // Check product title or variant title for encoded listing ID
-      const title = lineItem.title || lineItem.name || '';
+      const title = lineItem.title || lineItem.name || "";
       const titleMatch = title.match(/\[listing:([a-f0-9-]+)\]/i);
       if (titleMatch) {
         return titleMatch[1];
@@ -174,7 +194,7 @@ export function extractListingIdFromOrder(order: any): string | null {
 
     return null;
   } catch (error) {
-    console.error('Error extracting listing ID from order:', error);
+    console.error("Error extracting listing ID from order:", error);
     return null;
   }
 }
@@ -182,24 +202,26 @@ export function extractListingIdFromOrder(order: any): string | null {
 /**
  * Get creator wallet address from listing
  */
-export async function getCreatorFromListing(listingId: string): Promise<string | null> {
+export async function getCreatorFromListing(
+  listingId: string
+): Promise<string | null> {
   try {
-    const supabase = await import('./supabase').then(m => m.createClient());
-    
-    const { data, error } = await supabase
-      .from('listings')
-      .select('wallet_address')
-      .eq('id', listingId)
+    const supabaseInstance = supabase;
+
+    const { data, error } = await supabaseInstance
+      .from("listings")
+      .select("wallet_address")
+      .eq("id", listingId)
       .single();
 
     if (error) {
-      console.error('Error fetching creator from listing:', error);
+      console.error("Error fetching creator from listing:", error);
       return null;
     }
 
     return data?.wallet_address || null;
   } catch (error) {
-    console.error('Error getting creator from listing:', error);
+    console.error("Error getting creator from listing:", error);
     return null;
   }
 }
@@ -213,7 +235,7 @@ export function extractPurchaserFromOrder(order: any): string | null {
     // Check note attributes from checkout
     if (order.note_attributes) {
       for (const attr of order.note_attributes) {
-        if (attr.name === 'wallet_address' || attr.name === 'Wallet Address') {
+        if (attr.name === "wallet_address" || attr.name === "Wallet Address") {
           return attr.value;
         }
       }
@@ -221,7 +243,9 @@ export function extractPurchaserFromOrder(order: any): string | null {
 
     // Check order note for wallet address
     if (order.note) {
-      const walletMatch = order.note.match(/wallet[_-]?address:?\s*(0x[a-fA-F0-9]+)/i);
+      const walletMatch = order.note.match(
+        /wallet[_-]?address:?\s*(0x[a-fA-F0-9]+)/i
+      );
       if (walletMatch) {
         return walletMatch[1];
       }
@@ -229,7 +253,9 @@ export function extractPurchaserFromOrder(order: any): string | null {
 
     // Check customer metadata or tags
     if (order.customer?.note) {
-      const customerWalletMatch = order.customer.note.match(/wallet:?\s*(0x[a-fA-F0-9]+)/i);
+      const customerWalletMatch = order.customer.note.match(
+        /wallet:?\s*(0x[a-fA-F0-9]+)/i
+      );
       if (customerWalletMatch) {
         return customerWalletMatch[1];
       }
@@ -237,7 +263,7 @@ export function extractPurchaserFromOrder(order: any): string | null {
 
     return null;
   } catch (error) {
-    console.error('Error extracting purchaser from order:', error);
+    console.error("Error extracting purchaser from order:", error);
     return null;
   }
 }
@@ -248,32 +274,38 @@ export function extractPurchaserFromOrder(order: any): string | null {
 export async function validateWebhookRequest(
   request: NextRequest,
   payload: string
-): Promise<{ valid: boolean; headers?: ShopifyWebhookHeaders; error?: string }> {
+): Promise<{
+  valid: boolean;
+  headers?: ShopifyWebhookHeaders;
+  error?: string;
+}> {
   const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
-  
+
   if (!webhookSecret) {
-    return { valid: false, error: 'Webhook secret not configured' };
+    return { valid: false, error: "Webhook secret not configured" };
   }
 
   const headers = extractWebhookHeaders(request);
   if (!headers) {
-    return { valid: false, error: 'Missing required webhook headers' };
+    return { valid: false, error: "Missing required webhook headers" };
   }
 
   const isSignatureValid = verifyWebhookSignature(
     payload,
-    headers['x-shopify-hmac-sha256'],
+    headers["x-shopify-hmac-sha256"],
     webhookSecret
   );
 
   if (!isSignatureValid) {
-    return { valid: false, error: 'Invalid webhook signature' };
+    return { valid: false, error: "Invalid webhook signature" };
   }
 
   // Check if event has already been processed
-  const alreadyProcessed = await isEventProcessed(headers['x-shopify-event-id']);
+  const alreadyProcessed = await isEventProcessed(
+    headers["x-shopify-event-id"]
+  );
   if (alreadyProcessed) {
-    return { valid: false, error: 'Event already processed' };
+    return { valid: false, error: "Event already processed" };
   }
 
   return { valid: true, headers };
