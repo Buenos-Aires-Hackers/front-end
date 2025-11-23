@@ -59,6 +59,7 @@ export const depositContract = [
       {
         components: [
           { internalType: "string", name: "url", type: "string" },
+          { internalType: "string", name: "productId", type: "string" },
           { internalType: "uint256", name: "amount", type: "uint256" },
           { internalType: "address", name: "shopper", type: "address" },
           {
@@ -83,6 +84,7 @@ export const depositContract = [
       {
         components: [
           { internalType: "string", name: "url", type: "string" },
+          { internalType: "string", name: "productId", type: "string" },
           { internalType: "uint256", name: "amount", type: "uint256" },
           { internalType: "address", name: "shopper", type: "address" },
           {
@@ -173,6 +175,7 @@ export const depositContract = [
       {
         components: [
           { internalType: "string", name: "url", type: "string" },
+          { internalType: "string", name: "productId", type: "string" },
           { internalType: "uint256", name: "amount", type: "uint256" },
           { internalType: "address", name: "shopper", type: "address" },
           {
@@ -247,6 +250,7 @@ export const depositContract = [
     name: "fetchListing",
     outputs: [
       { internalType: "string", name: "url", type: "string" },
+      { internalType: "string", name: "productId", type: "string" },
       { internalType: "uint256", name: "amount", type: "uint256" },
       { internalType: "address", name: "shopper", type: "address" },
       { internalType: "bytes32", name: "privateCredentials", type: "bytes32" },
@@ -259,6 +263,7 @@ export const depositContract = [
       {
         components: [
           { internalType: "string", name: "url", type: "string" },
+          { internalType: "string", name: "productId", type: "string" },
           { internalType: "uint256", name: "amount", type: "uint256" },
           { internalType: "address", name: "shopper", type: "address" },
           {

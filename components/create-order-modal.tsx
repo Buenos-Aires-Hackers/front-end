@@ -13,8 +13,8 @@ import { humanizeShopifyHandle } from "@/lib/shopify";
 import type { UserAddress } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import { parseUnits } from "viem";
 import type { Address } from "viem";
+import { parseUnits } from "viem";
 
 interface CreateOrderModalProps {
   isOpen: boolean;
@@ -76,7 +76,9 @@ const formatShopifyPrice = (amount?: string, currency?: string) => {
   }
 };
 
-const parseDeliveryAddress = (raw: string): { homeAddress: string; city: string } => {
+const parseDeliveryAddress = (
+  raw: string
+): { homeAddress: string; city: string } => {
   if (!raw) {
     return { homeAddress: "", city: "" };
   }
@@ -98,15 +100,15 @@ const buildPrivateCredentialsInput = (
   connectedAddress?: string
 ): PrivateCredentialsInput => {
   const parsedAddress = parseDeliveryAddress(formValues.deliveryAddress);
-  const combinedSavedAddress = [savedAddress?.address_line_1, savedAddress?.address_line_2]
+  const combinedSavedAddress = [
+    savedAddress?.address_line_1,
+    savedAddress?.address_line_2,
+  ]
     .filter(Boolean)
     .join(", ");
 
   return {
-    fullName:
-      savedAddress?.full_name ||
-      connectedAddress ||
-      "EthStore Shopper",
+    fullName: savedAddress?.full_name || connectedAddress || "EthStore Shopper",
     emailAddress: "",
     homeAddress:
       combinedSavedAddress ||

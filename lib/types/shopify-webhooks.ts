@@ -1,12 +1,12 @@
 // Shopify webhook types and interfaces
 export interface ShopifyWebhookHeaders {
-  'x-shopify-topic': string;
-  'x-shopify-hmac-sha256': string;
-  'x-shopify-shop-domain': string;
-  'x-shopify-api-version': string;
-  'x-shopify-webhook-id': string;
-  'x-shopify-triggered-at': string;
-  'x-shopify-event-id': string;
+  "x-shopify-topic": string;
+  "x-shopify-hmac-sha256": string;
+  "x-shopify-shop-domain": string;
+  "x-shopify-api-version": string;
+  "x-shopify-webhook-id": string;
+  "x-shopify-triggered-at": string;
+  "x-shopify-event-id": string;
 }
 
 export interface ShopifyOrder {
@@ -28,8 +28,15 @@ export interface ShopifyOrder {
   billing_address?: ShopifyAddress;
   shipping_address?: ShopifyAddress;
   line_items: ShopifyLineItem[];
-  financial_status: 'pending' | 'authorized' | 'partially_paid' | 'paid' | 'partially_refunded' | 'refunded' | 'voided';
-  fulfillment_status?: 'fulfilled' | 'null' | 'partial' | 'restocked';
+  financial_status:
+    | "pending"
+    | "authorized"
+    | "partially_paid"
+    | "paid"
+    | "partially_refunded"
+    | "refunded"
+    | "voided";
+  fulfillment_status?: "fulfilled" | "null" | "partial" | "restocked";
   total_price: string;
   subtotal_price: string;
   total_tax: string;
@@ -94,12 +101,21 @@ export interface ShopifyLineItem {
 export interface ShopifyFulfillment {
   id: number;
   order_id: number;
-  status: 'pending' | 'open' | 'success' | 'cancelled' | 'error' | 'failure';
+  status: "pending" | "open" | "success" | "cancelled" | "error" | "failure";
   created_at: string;
   service: string;
   updated_at: string;
   tracking_company?: string;
-  shipment_status?: 'label_printed' | 'label_purchased' | 'attempted_delivery' | 'ready_for_pickup' | 'confirmed' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'failure';
+  shipment_status?:
+    | "label_printed"
+    | "label_purchased"
+    | "attempted_delivery"
+    | "ready_for_pickup"
+    | "confirmed"
+    | "in_transit"
+    | "out_for_delivery"
+    | "delivered"
+    | "failure";
   location_id?: number;
   line_items: ShopifyLineItem[];
   tracking_number?: string;
@@ -122,7 +138,7 @@ export interface ShopifyOrderRecord {
   listing_id: string;
   purchaser_wallet_address: string;
   creator_wallet_address: string;
-  order_status: 'pending' | 'paid' | 'fulfilled' | 'cancelled' | 'refunded';
+  order_status: "pending" | "paid" | "fulfilled" | "cancelled" | "refunded";
   financial_status?: string;
   fulfillment_status?: string;
   total_price: number;
@@ -132,6 +148,8 @@ export interface ShopifyOrderRecord {
   shipping_address?: ShopifyAddress;
   line_items?: ShopifyLineItem[];
   webhook_events: WebhookEvent[];
+  claimed_at?: string;
+  claim_amount?: number;
   created_at: string;
   updated_at: string;
 }
@@ -143,7 +161,7 @@ export interface FulfillmentTrackingRecord {
   tracking_company?: string;
   tracking_number?: string;
   tracking_url?: string;
-  shipment_status: 'pending' | 'in_transit' | 'delivered' | 'exception';
+  shipment_status: "pending" | "in_transit" | "delivered" | "exception";
   shipped_at?: string;
   estimated_delivery?: string;
   delivered_at?: string;
@@ -216,6 +234,10 @@ export interface OrderSummary {
   total_price: number;
   currency: string;
   created_at: string;
+  claimed_at?: string;
+  claim_amount?: number;
+  purchaser_wallet_address?: string;
+  creator_wallet_address?: string;
   tracking_info?: {
     tracking_number: string;
     tracking_url: string;
@@ -234,15 +256,15 @@ export interface OrderDetails extends ShopifyOrderRecord {
   fulfillment_tracking?: FulfillmentTrackingRecord[];
 }
 
-export type WebhookTopic = 
-  | 'orders/create'
-  | 'orders/paid'
-  | 'orders/fulfilled'
-  | 'orders/cancelled'
-  | 'orders/updated'
-  | 'orders/partially_fulfilled'
-  | 'fulfillments/create'
-  | 'fulfillments/update';
+export type WebhookTopic =
+  | "orders/create"
+  | "orders/paid"
+  | "orders/fulfilled"
+  | "orders/cancelled"
+  | "orders/updated"
+  | "orders/partially_fulfilled"
+  | "fulfillments/create"
+  | "fulfillments/update";
 
 export interface WebhookProcessingResult {
   success: boolean;

@@ -22,7 +22,7 @@ export interface Listing {
   category?: string;
   in_stock?: boolean;
   // New fields from purchase requests consolidation
-  status?: "open" | "in_progress" | "fulfilled" | "cancelled";
+  status?: "available" | "in_progress" | "fulfilled" | "cancelled";
   max_budget?: string;
   priority?: "low" | "medium" | "high" | "urgent";
   deadline?: string;

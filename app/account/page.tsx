@@ -6,10 +6,12 @@ import type { AccountOrder, Listing, UserAddress } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { useEffect, useMemo, useState } from "react";
+import { parseEther } from "viem";
 import { useAccountData } from "../hooks/useAccountData";
 import { useAddressMutations } from "../hooks/useAddressMutations";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { useUserOrders } from "../hooks/useOrderTracking";
+import { createListing, useZkPurchaseFlow } from "../hooks/useZkPurchaseFlow";
 
 type AddressFormValues = {
   full_name: string;
@@ -53,6 +55,17 @@ export default function AccountPage() {
   const { saveAddress, isSavingAddress } = useAddressMutations();
   const [addressNotice, setAddressNotice] = useState<string | null>(null);
 
+  // ZK Purchase Flow for claim functionality
+  const {
+    executePurchaseFlow,
+    generateProofOnly,
+    calculateListingId,
+    isProcessing: isZkProcessing,
+    currentStep,
+    error: zkError,
+    clearError: clearZkError,
+  } = useZkPurchaseFlow();
+
   // Fetch Shopify orders from new order tracking system (only when walletAddress exists)
   const {
     data: shopifyOrdersData,
@@ -62,6 +75,12 @@ export default function AccountPage() {
   console.log("🚀 ~ AccountPage ~ shopifyOrdersData:", shopifyOrdersData);
   console.log("🚀 ~ AccountPage ~ data:", data);
   console.log("🚀 ~ AccountPage ~ currentUser:", currentUser);
+  console.log("🚀 ~ AccountPage ~ walletAddress:", walletAddress);
+  console.log("🚀 ~ AccountPage ~ data.listings:", data?.listings);
+  console.log(
+    "🚀 ~ AccountPage ~ shopifyOrders:",
+    shopifyOrdersData?.data?.orders
+  );
 
   // Refetch account data when user is loaded to ensure fresh data
   useEffect(() => {
@@ -106,6 +125,190 @@ export default function AccountPage() {
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleDateString() : "--";
 
+  const handleClaimOrder = async (shopifyOrderId: number, order: any) => {
+    if (!currentUser || !walletAddress) {
+      setAddressNotice("Please connect your wallet to claim orders.");
+      return;
+    }
+
+    try {
+      clearZkError();
+      setAddressNotice("Testing listing ID calculation with order data...");
+
+      console.log("🧪 Using order data for calculateId:", {
+        shopifyOrderId,
+        order,
+        walletAddress,
+      });
+
+      // Use the order data directly to create the listing structure
+      // Fix: privateCredentials must be exactly 32 bytes (bytes32)
+      const credentialsData = JSON.stringify({
+        orderId: shopifyOrderId,
+        walletAddress,
+        timestamp: Date.now(),
+      });
+
+      // Create a 32-byte hash from the credentials data
+      const credentialsHash = `0x${Buffer.from(credentialsData)
+        .toString("hex")
+        .slice(0, 64)
+        .padEnd(64, "0")}` as `0x${string}`;
+
+      const orderListing = {
+        url: order.listing_title || `Order #${shopifyOrderId}`,
+        productId: shopifyOrderId.toString(),
+        amount: parseEther(order.total_price?.toString() || "0"),
+        shopper: walletAddress as `0x${string}`,
+        privateCredentials: credentialsHash,
+      };
+
+      console.log("🧪 Order listing for ID calculation:", orderListing);
+      console.log(
+        "📋 privateCredentials length:",
+        credentialsHash.length,
+        "should be 66 (0x + 64 hex chars)"
+      );
+
+      // Step 1: Generate ZK proof first
+      setAddressNotice("Generating ZK proof for order verification...");
+
+      // Generate ZK proof for the order
+      const zkProofResult = await generateProofOnly(
+        shopifyOrderId.toString(),
+        walletAddress as `0x${string}`,
+        [
+          "id",
+          "total_price",
+          "financial_status",
+          "fulfillment_status",
+          "customer",
+        ]
+      );
+
+      if (!zkProofResult.success) {
+        throw new Error(zkProofResult.error || "Failed to generate ZK proof");
+      }
+
+      // Step 2: Calculate listing ID using the same structure
+      setAddressNotice("ZK proof generated! Calculating listing ID...");
+
+      let listingId: `0x${string}`;
+      try {
+        console.log("🔍 Calculating listing ID with orderListing...");
+        const idResult = await calculateListingId(orderListing);
+
+        if (!idResult.success || !idResult.data) {
+          throw new Error("Failed to get listing ID from calculation");
+        }
+
+        listingId = idResult.data;
+        console.log("✅ Listing ID calculated:", listingId);
+        setAddressNotice(
+          `Listing ID calculated: ${listingId.slice(
+            0,
+            10
+          )}... Submitting to blockchain...`
+        );
+      } catch (calcError) {
+        console.error("❌ calculateId failed:", calcError);
+        throw new Error(
+          `Failed to calculate listing ID: ${
+            calcError instanceof Error ? calcError.message : "Unknown error"
+          }`
+        );
+      }
+
+      // Step 3: Submit purchase with ZK proof and calculated listing ID
+      setAddressNotice("Submitting claim to blockchain...");
+
+      // Create the final listing for submission (reuse the same structure)
+      const listing = createListing(
+        order.listing_title || `Order #${shopifyOrderId}`,
+        shopifyOrderId.toString(),
+        parseEther(order.total_price?.toString() || "0"),
+        walletAddress as `0x${string}`,
+        credentialsHash
+      );
+
+      // Now manually execute the purchase flow with our calculated ID
+      let purchaseResult;
+      try {
+        console.log(
+          "🔗 Submitting purchase with calculated listing ID:",
+          listingId
+        );
+
+        // Use the contract hooks that are already available from useZkPurchaseFlow
+        const purchaseHash = await executePurchaseFlow({
+          listing,
+          orderId: shopifyOrderId.toString(),
+          walletAddress: walletAddress as `0x${string}`,
+          extractionFields: [
+            "id",
+            "total_price",
+            "financial_status",
+            "fulfillment_status",
+          ],
+        });
+
+        console.log("✅ Purchase flow completed:", purchaseHash);
+        purchaseResult = purchaseHash;
+
+        setAddressNotice("Purchase confirmed! Updating database...");
+      } catch (purchaseError) {
+        console.error("❌ Purchase submission failed:", purchaseError);
+        throw new Error(
+          `Purchase submission failed: ${
+            purchaseError instanceof Error
+              ? purchaseError.message
+              : "Unknown error"
+          }`
+        );
+      }
+
+      // Also call the traditional claim API for database updates
+      const response = await fetch(`/api/orders/${shopifyOrderId}/claim`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress: walletAddress,
+          zkProof: zkProofResult.zkProof,
+          transactionHash: purchaseResult.purchaseHash,
+          listingId: listingId, // Use our calculated listing ID
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.warn("Database claim update failed:", result.error);
+        // Don't fail the entire process if blockchain succeeded
+      }
+
+      setAddressNotice(
+        `Order claimed successfully! Transaction: ${purchaseResult.purchaseHash.slice(
+          0,
+          10
+        )}...`
+      );
+
+      // Refresh orders data to reflect the claim
+      if (shopifyOrdersData) {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error claiming order with ZK proof:", error);
+      setAddressNotice(
+        error instanceof Error
+          ? `Failed to claim order: ${error.message}`
+          : "Failed to claim order. Please try again."
+      );
+    }
+  };
+
   const renderOrders = (orders: AccountOrder[]) => {
     if (!orders.length) {
       return <p className="text-sm text-zinc-500">No orders yet.</p>;
@@ -145,8 +348,18 @@ export default function AccountPage() {
   };
 
   const renderRequests = (requests: Listing[]) => {
+    console.log("renderRequests called with:", requests);
+    console.log("requests.length:", requests?.length);
+
     if (!requests.length) {
-      return <p className="text-sm text-zinc-500">No purchase requests.</p>;
+      return (
+        <div className="text-sm text-zinc-500">
+          <p>No purchase requests.</p>
+          <p className="text-xs text-zinc-600 mt-2">
+            Debug: Total requests = {requests?.length || 0}
+          </p>
+        </div>
+      );
     }
 
     const handleDeleteRequest = async (requestId: number) => {
@@ -176,7 +389,7 @@ export default function AccountPage() {
     return (
       <div className="space-y-3">
         {requests.map((request) => {
-          if (request.status !== "open") return null;
+          if (request.status !== "available") return null;
           return (
             <div
               key={request.id}
@@ -208,7 +421,7 @@ export default function AccountPage() {
                       {request.category ?? "general"}
                     </p>
                   </div>
-                  {request.status !== "open" && (
+                  {request.status === "available" && (
                     <button
                       onClick={() => handleDeleteRequest(request.id)}
                       className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-900/20 transition-colors"
@@ -230,8 +443,15 @@ export default function AccountPage() {
     orders:
       (data?.orders.length ?? 0) + (shopifyOrdersData?.data.orders.length ?? 0),
     listings: data?.listings?.length ?? 0,
-    revenue: shopifyOrdersData?.data.analytics?.totalRevenue ?? 0,
+    // revenue: shopifyOrdersData?.data.analytics?.totalRevenue ?? 0,
   };
+
+  const activeListings = useMemo(() => {
+    if (data?.listings) {
+      return data.listings.filter((listing) => listing.status === "available");
+    }
+    return [];
+  }, [data?.listings]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#050505] via-[#020202] to-black text-white">
@@ -295,6 +515,25 @@ export default function AccountPage() {
               </p>
             </div>
           )}
+          {zkError && (
+            <div className="mt-4 p-3 rounded-2xl bg-red-900/20 border border-red-400/20">
+              <p className="text-sm text-red-400">ZK Proof Error: {zkError}</p>
+              <button
+                onClick={clearZkError}
+                className="text-xs text-red-300 hover:text-red-200 mt-1 underline"
+              >
+                Clear error
+              </button>
+            </div>
+          )}
+          {currentStep && (
+            <div className="mt-4 p-3 rounded-2xl bg-emerald-900/20 border border-emerald-400/20">
+              <p className="text-sm text-emerald-200 flex items-center gap-2">
+                <div className="animate-spin w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full" />
+                {currentStep}
+              </p>
+            </div>
+          )}
           {!walletAddress && (
             <div className="mt-4 p-3 rounded-2xl bg-yellow-900/20 border border-yellow-400/20">
               <p className="text-sm text-yellow-400">
@@ -323,9 +562,23 @@ export default function AccountPage() {
                   Error loading orders: {shopifyOrdersError.message}
                 </p>
               ) : !shopifyOrdersData?.data.orders.length ? (
-                <p className="text-sm text-zinc-500">
-                  No marketplace orders yet.
-                </p>
+                <div className="text-sm text-zinc-500">
+                  <p>No marketplace orders yet.</p>
+                  <p className="text-xs text-zinc-600 mt-2">
+                    Debug: walletAddress = {walletAddress}
+                  </p>
+                  <p className="text-xs text-zinc-600">
+                    Orders data:{" "}
+                    {JSON.stringify(shopifyOrdersData?.data, null, 2)}
+                  </p>
+                  {zkError && (
+                    <div className="mt-3 p-2 rounded-lg bg-red-900/20 border border-red-400/20">
+                      <p className="text-xs text-red-400">
+                        ZK Error: {zkError}
+                      </p>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-3">
                   {shopifyOrdersData.data.orders.map((order) => (
@@ -334,7 +587,7 @@ export default function AccountPage() {
                       className="rounded-2xl border border-white/10 bg-black/30 p-4"
                     >
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        <div>
+                        <div className="flex-1">
                           <p className="text-lg font-semibold text-white">
                             {order.listing_title}
                           </p>
@@ -349,13 +602,51 @@ export default function AccountPage() {
                             </p>
                           )}
                         </div>
-                        <div className="text-right">
-                          <p className="text-xl font-semibold text-emerald-300">
-                            ${order.total_price} {order.currency}
-                          </p>
-                          <p className="text-xs uppercase tracking-wide text-zinc-500">
-                            {formatDate(order.created_at)}
-                          </p>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-xl font-semibold text-emerald-300">
+                              ${order.total_price} {order.currency}
+                            </p>
+                            <p className="text-xs uppercase tracking-wide text-zinc-500">
+                              {formatDate(order.created_at)}
+                            </p>
+                          </div>
+                          {order.order_status === "fulfilled" &&
+                            !order.claimed_at &&
+                            order.purchaser_wallet_address?.toLowerCase() ===
+                              walletAddress?.toLowerCase() && (
+                              <Button
+                                onClick={() =>
+                                  handleClaimOrder(
+                                    order.shopify_order_id,
+                                    order
+                                  )
+                                }
+                                disabled={isZkProcessing}
+                                className="rounded-2xl border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isZkProcessing ? (
+                                  <span className="flex items-center gap-2">
+                                    <div className="animate-spin w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full" />
+                                    {currentStep
+                                      ? currentStep.slice(0, 15) + "..."
+                                      : "Processing..."}
+                                  </span>
+                                ) : (
+                                  "Claim with ZK Proof"
+                                )}
+                              </Button>
+                            )}
+                          {order.claimed_at && (
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-emerald-300">
+                                ✓ Claimed
+                              </p>
+                              <p className="text-xs text-emerald-400">
+                                {formatDate(order.claimed_at)}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -366,9 +657,9 @@ export default function AccountPage() {
 
             <section className="rounded-3xl border border-white/10 bg-black/40 p-6">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Your Listings</h2>
+                <h2 className="text-xl font-semibold">Active Listings</h2>
                 <span className="text-sm text-zinc-500">
-                  {data?.listings?.length ?? 0} active listings
+                  {activeListings.length ?? 0} active listings
                 </span>
               </div>
 

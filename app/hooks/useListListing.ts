@@ -85,6 +85,7 @@ export const useListListing = (
             {
               url: listing.url,
               amount: listing.amount,
+              productId: "",
               shopper: listing.shopper,
               privateCredentials: listing.privateCredentials,
             },
@@ -133,8 +134,7 @@ export const useListListing = (
     isWriting,
     isConfirming,
     isConfirmed,
-    error:
-      (writeError as Error | null) ?? (waitError as Error | null) ?? null,
+    error: (writeError as Error | null) ?? (waitError as Error | null) ?? null,
     waitForReceipt,
     reset,
   };

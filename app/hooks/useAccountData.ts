@@ -137,11 +137,9 @@ export const useAccountData = (walletAddress?: string) => {
             // Filter by wallet address in various possible fields
             const userListings = (allData ?? []).filter(
               (listing) =>
-                listing.ordered_by === walletAddress ||
-                listing.ordered_by_user_id === userRecord?.id ||
-                // Also check if the listing was created by this wallet (might be stored differently)
                 listing.ordered_by?.toLowerCase() ===
-                  walletAddress?.toLowerCase()
+                  walletAddress?.toLowerCase() ||
+                listing.ordered_by_user_id === userRecord?.id
             );
 
             console.log("Filtered user listings:", userListings);

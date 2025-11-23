@@ -140,22 +140,16 @@ export class OrderService {
    */
   async getUserOrders(walletAddress: string): Promise<OrderSummary[]> {
     try {
-      const { data, error } = await this.supabase
+      console.log("getUserOrders searching for wallet:", walletAddress);
+
+      // Debug: Check what orders exist in the database
+      const { data: allOrders, error } = await this.supabase
         .from("shopify_orders")
         .select(
-          `
-          id,
-          shopify_order_id,
-          order_status,
-          total_price,
-          currency,
-          created_at,
-          listings(title),
-          fulfillment_tracking(tracking_number, tracking_url, shipment_status)
-        `
+          "id, purchaser_wallet_address, creator_wallet_address, order_status, shopify_order_id, total_price, currency, created_at, listings(title), fulfillment_tracking(tracking_number, tracking_url, shipment_status)"
         )
         .or(
-          `purchaser_wallet_address.eq.${walletAddress},creator_wallet_address.eq.${walletAddress}`
+          `purchaser_wallet_address.eq.${walletAddress},creator_wallet_address.eq.${walletAddress},purchaser_wallet_address.eq.${walletAddress.toLowerCase()},creator_wallet_address.eq.${walletAddress.toLowerCase()}`
         )
         .order("created_at", { ascending: false });
 
@@ -164,7 +158,11 @@ export class OrderService {
         return [];
       }
 
-      return data.map((order) => ({
+      if (!allOrders) {
+        return [];
+      }
+
+      return allOrders?.map((order) => ({
         id: order.id,
         shopify_order_id: order.shopify_order_id,
         listing_title: (order.listings as any)?.title || "Unknown Item",
@@ -172,6 +170,11 @@ export class OrderService {
         total_price: order.total_price,
         currency: order.currency,
         created_at: order.created_at,
+        // claimed_at and claim_amount are not in the database yet
+        claimed_at: undefined,
+        claim_amount: undefined,
+        purchaser_wallet_address: order.purchaser_wallet_address,
+        creator_wallet_address: order.creator_wallet_address,
         tracking_info: order.fulfillment_tracking?.[0]
           ? {
               tracking_number: order.fulfillment_tracking[0].tracking_number,
@@ -359,11 +362,12 @@ export class OrderService {
           total_price,
           currency,
           order_status,
-          created_at,
-          listings!inner(wallet_address)
+          created_at
         `
         )
-        .eq("listings.wallet_address", walletAddress)
+        .or(
+          `purchaser_wallet_address.eq.${walletAddress},creator_wallet_address.eq.${walletAddress},purchaser_wallet_address.eq.${walletAddress.toLowerCase()},creator_wallet_address.eq.${walletAddress.toLowerCase()}`
+        )
         .eq("order_status", "paid");
 
       if (error) {

@@ -1,6 +1,5 @@
 import { orderService } from "@/lib/order-service";
 import { supabase } from "@/lib/supabase";
-import { OrderFulfilledPayload } from "@/lib/types/shopify-webhooks";
 import {
   logWebhookEvent,
   markEventProcessed,
@@ -31,14 +30,14 @@ export async function POST(request: NextRequest) {
       "Order ID:",
       fulfillmentData.order_id
     );
-    
+
     // Debug: Log the webhook topic to make sure we're getting the right webhook
     console.log("Webhook topic received:", headers!["x-shopify-topic"]);
     console.log("Fulfillment data keys:", Object.keys(fulfillmentData));
 
     // Use the order_id from the fulfillment payload, not the fulfillment id
     const actualOrderId = fulfillmentData.order_id;
-    
+
     if (!actualOrderId) {
       console.error("No order_id found in fulfillment payload");
       return NextResponse.json({
@@ -128,9 +127,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-
-

@@ -43,16 +43,16 @@ export const useListings = (
   } = useQuery({
     queryKey: [
       "listings",
-      {
-        category,
-        inStock,
-        orderBy,
-        orderDirection,
-        limit,
-        hideAvailable,
-        showUserPurchases,
-        userEmail,
-      },
+      //   {
+      //     category,
+      //     inStock,
+      //     orderBy,
+      //     orderDirection,
+      //     limit,
+      //     hideAvailable,
+      //     showUserPurchases,
+      //     userEmail,
+      //   },
     ],
     queryFn: async (): Promise<Listing[]> => {
       let query = supabase
@@ -87,8 +87,7 @@ export const useListings = (
 
       return data || [];
     },
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+    staleTime: 1000 * 20, // Consider data fresh for 20 seconds
   });
 
   return {
