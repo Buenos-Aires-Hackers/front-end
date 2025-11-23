@@ -30,10 +30,7 @@ export const metadata: Metadata = {
   category: "shopping",
   manifest: "/manifest.webmanifest",
   colorScheme: "dark",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#050505" },
-  ],
+  themeColor: "#050505",
   formatDetection: {
     address: false,
     email: false,
