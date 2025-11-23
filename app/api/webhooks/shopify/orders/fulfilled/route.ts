@@ -20,28 +20,45 @@ export async function POST(request: NextRequest) {
     }
 
     const { headers } = validation;
-    const orderData: OrderFulfilledPayload = JSON.parse(payload);
+    const fulfillmentData = JSON.parse(payload);
 
     // Log webhook event
-    await logWebhookEvent("orders/fulfilled", headers!, orderData);
+    await logWebhookEvent("orders/fulfilled", headers!, fulfillmentData);
 
     console.log(
-      "Processing order fulfilled webhook for order ID:",
-      orderData.id
+      "Processing order fulfilled webhook - Fulfillment ID:",
+      fulfillmentData.id,
+      "Order ID:",
+      fulfillmentData.order_id
     );
+    
+    // Debug: Log the webhook topic to make sure we're getting the right webhook
+    console.log("Webhook topic received:", headers!["x-shopify-topic"]);
+    console.log("Fulfillment data keys:", Object.keys(fulfillmentData));
 
-    // First, try to find the order in our system by order_id or checkout_id
+    // Use the order_id from the fulfillment payload, not the fulfillment id
+    const actualOrderId = fulfillmentData.order_id;
+    
+    if (!actualOrderId) {
+      console.error("No order_id found in fulfillment payload");
+      return NextResponse.json({
+        success: false,
+        message: "No order_id in payload",
+      });
+    }
+
+    console.log("Looking for order with ID:", actualOrderId);
+
+    // Find order by the actual Shopify order ID from the payload
     const { data: existingOrder } = await supabase
       .from("shopify_orders")
-      .select("shopify_order_id, shopify_checkout_id")
-      .or(
-        `shopify_order_id.eq.${orderData.id},shopify_checkout_id.eq.${orderData.id}`
-      )
+      .select("shopify_order_id, listing_id, purchaser_wallet_address")
+      .eq("shopify_order_id", actualOrderId)
       .maybeSingle();
 
     if (!existingOrder) {
       console.warn(
-        `Order ${orderData.id} not found in our system, skipping fulfillment update`
+        `Order ${actualOrderId} not found in our system for fulfillment webhook`
       );
       return NextResponse.json({
         success: true,
@@ -49,15 +66,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const actualOrderId = existingOrder.shopify_order_id;
     console.log(`Found order in system: ${actualOrderId}`);
 
     // Update order status to fulfilled
     const result = await orderService.updateOrderStatus(
       actualOrderId,
       "fulfilled",
-      orderData.financial_status,
-      orderData.fulfillment_status || "fulfilled"
+      undefined, // No financial_status in fulfillment payload
+      "fulfilled"
     );
 
     if (!result.success) {
@@ -65,7 +81,7 @@ export async function POST(request: NextRequest) {
       await logWebhookEvent(
         "orders/fulfilled",
         headers!,
-        orderData,
+        fulfillmentData,
         false,
         result.error
       );
@@ -94,9 +110,10 @@ export async function POST(request: NextRequest) {
     await markEventProcessed(headers!["x-shopify-event-id"]);
 
     console.log("Successfully processed order fulfilled webhook:", {
-      originalId: orderData.id,
+      fulfillmentId: fulfillmentData.id,
       actualOrderId: actualOrderId,
-      fulfillmentStatus: orderData.fulfillment_status,
+      trackingNumber: fulfillmentData.tracking_number,
+      trackingCompany: fulfillmentData.tracking_company,
     });
 
     return NextResponse.json({
