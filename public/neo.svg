@@ -1,0 +1,134 @@
+  <svg
+        viewBox="0 0 200 200"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="Cypherpunk site mascot"
+      >
+        {/* Background glow */}
+        <defs>
+          <radialGradient id="bgGlow" cx="50%" cy="40%" r="70%">
+            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.35" />
+            <stop offset="40%" stopColor="#0f172a" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#020617" stopOpacity="1" />
+          </radialGradient>
+        </defs>
+
+        <rect width="200" height="200" rx="24" fill="#020617" />
+        <circle cx="100" cy="90" r="80" fill="url(#bgGlow)" />
+
+        {/* Torso / coat */}
+        <path
+          d="M70 190 L55 95 Q70 70 100 70 Q130 70 145 95 L130 190 Z"
+          fill="#020617"
+          stroke="#1f2937"
+          strokeWidth="2"
+        />
+
+        {/* Inner coat line */}
+        <path
+          d="M100 72 L100 190"
+          stroke="#111827"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+
+        {/* Shoulders */}
+        <path
+          d="M58 100 Q72 82 100 80 Q128 82 142 100"
+          fill="#020617"
+          stroke="#1f2937"
+          strokeWidth="2"
+        />
+
+        {/* Head */}
+        <circle cx="100" cy="55" r="22" fill="#020617" stroke="#1f2937" strokeWidth="2" />
+
+        {/* Hair silhouette */}
+        <path
+          d="M82 52 Q90 38 100 36 Q110 38 118 52 Q110 48 100 48 Q90 48 82 52 Z"
+          fill="#020617"
+          stroke="#1f2937"
+          strokeWidth="1.5"
+        />
+
+        {/* Visor glasses */}
+        <rect
+          x="82"
+          y="49"
+          width="36"
+          height="9"
+          rx="4.5"
+          fill="#020617"
+          stroke="#22c55e"
+          strokeWidth="2"
+        />
+        {/* Glowing line in visor */}
+        <line
+          x1="86"
+          y1="53.5"
+          x2="118"
+          y2="53.5"
+          stroke="#22c55e"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+
+        {/* Neck */}
+        <rect x="93" y="66" width="14" height="10" rx="4" fill="#020617" />
+
+        {/* Left arm (bent, holding crypto cube) */}
+        <path
+          d="M70 110 Q58 122 65 138 Q72 154 88 150"
+          fill="none"
+          stroke="#1f2937"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+
+        {/* Crypto cube */}
+        <rect
+          x="80"
+          y="132"
+          width="18"
+          height="18"
+          rx="4"
+          fill="#020617"
+          stroke="#6366f1"
+          strokeWidth="2"
+        />
+        <path
+          d="M81 141 L89 135 L97 141 L89 147 Z"
+          fill="none"
+          stroke="#6366f1"
+          strokeWidth="1.5"
+        />
+
+        {/* Right arm downwards */}
+        <path
+          d="M130 112 Q142 128 136 150"
+          fill="none"
+          stroke="#1f2937"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+
+        {/* Tiny code lines on coat */}
+        <line
+          x1="112"
+          y1="110"
+          x2="126"
+          y2="110"
+          stroke="#22c55e"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <line
+          x1="110"
+          y1="122"
+          x2="132"
+          y2="122"
+          stroke="#4ade80"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>

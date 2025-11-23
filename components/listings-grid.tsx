@@ -83,7 +83,7 @@ export default function ListingsGrid({
           </div>
         )}
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <div className="animate-spin rounded h-8 w-8 border-b-2 border-gray-900"></div>
           <span className="ml-2 text-gray-600">Loading listings...</span>
         </div>
       </div>
@@ -99,7 +99,7 @@ export default function ListingsGrid({
           </div>
         )}
         <div className="text-center py-12">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded p-4 max-w-md mx-auto">
             <p className="text-red-800 font-medium">Error loading listings</p>
             <p className="text-red-600 text-sm mt-1">{error.message}</p>
           </div>
@@ -128,7 +128,7 @@ export default function ListingsGrid({
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-0 ${className}`}>
       {showTitle && (
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>

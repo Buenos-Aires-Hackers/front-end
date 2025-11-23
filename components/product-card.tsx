@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { type Listing } from "@/lib/supabase";
@@ -44,19 +43,11 @@ export default function ProductCard({
       className="group flex h-full flex-col overflow-hidden border border-emerald-300/20 bg-[#050505] text-white shadow-[0_0_25px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-1 hover:border-emerald-300/70 hover:shadow-[0_10px_45px_rgba(20,241,149,0.25)]"
     >
       <div className="relative h-64 w-full overflow-hidden bg-gradient-to-b from-zinc-900 via-black to-black">
-        {badge && (
-          <Badge
-            className="absolute left-4 top-4 bg-emerald-400/20 text-emerald-200"
-            variant="outline"
-          >
-            {badge}
-          </Badge>
-        )}
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={title}
-            className="h-full w-full rounded-b-[2rem] object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full rounded-b object-cover object-center transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-zinc-500">
@@ -78,7 +69,7 @@ export default function ProductCard({
 
         <p className="line-clamp-2 text-zinc-400">
           {description ||
-            "Discover premium drops sourced by the EthStore community."}
+            "Discover premium drops sourced by the PayPunk community."}
         </p>
 
         <div className="mt-auto space-y-3">
@@ -97,7 +88,7 @@ export default function ProductCard({
 
           <Button
             onClick={handleFulfillClick}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-400 bg-transparent text-lg uppercase tracking-widest text-emerald-300 transition-colors hover:bg-emerald-400/10"
+            className="flex w-full items-center justify-center gap-2 rounded border border-emerald-400 bg-transparent text-lg uppercase tracking-widest text-emerald-300 transition-colors hover:bg-emerald-400/10"
           >
             <ShoppingCart className="h-5 w-5" />
             Fulfill

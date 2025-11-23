@@ -108,7 +108,7 @@ const buildPrivateCredentialsInput = (
     .join(", ");
 
   return {
-    fullName: savedAddress?.full_name || connectedAddress || "EthStore Shopper",
+    fullName: savedAddress?.full_name || connectedAddress || "PayPunk Shopper",
     emailAddress: "",
     homeAddress:
       combinedSavedAddress ||
@@ -275,7 +275,7 @@ export default function CreateOrderModal({
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-md rounded-3xl border border-emerald-400/20 bg-[#050505] p-8 text-white shadow-[0_15px_60px_rgba(0,0,0,0.65)]"
+        className="w-full max-w-md rounded border border-emerald-400/20 bg-[#050505] p-8 text-white shadow-[0_15px_60px_rgba(0,0,0,0.65)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-6">
@@ -297,7 +297,7 @@ export default function CreateOrderModal({
                 setFormValues((prev) => ({ ...prev, url: event.target.value }))
               }
               placeholder="https://your-store.myshopify.com/products/..."
-              className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
 
@@ -307,7 +307,7 @@ export default function CreateOrderModal({
               type="text"
               value={connectedAddress ?? "Connect wallet to continue"}
               readOnly
-              className="w-full cursor-not-allowed rounded-2xl border border-emerald-400/20 bg-black/30 px-4 py-3 text-white placeholder:text-zinc-500"
+              className="w-full cursor-not-allowed rounded border border-emerald-400/20 bg-black/30 px-4 py-3 text-white placeholder:text-zinc-500"
             />
           </div>
 
@@ -324,7 +324,7 @@ export default function CreateOrderModal({
                 }))
               }
               placeholder="0x Street Name, City"
-              className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
 
@@ -341,7 +341,7 @@ export default function CreateOrderModal({
                 }))
               }
               placeholder="United States"
-              className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
 
@@ -360,7 +360,7 @@ export default function CreateOrderModal({
                 }))
               }
               placeholder="149.00"
-              className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
 
@@ -370,7 +370,7 @@ export default function CreateOrderModal({
             <Button
               type="button"
               onClick={handleClose}
-              className="w-1/2 rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
+              className="w-1/2 rounded border border-white/10 bg-white/5 text-white hover:bg-white/10"
               variant="ghost"
             >
               Cancel
@@ -378,7 +378,7 @@ export default function CreateOrderModal({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-1/2 rounded-2xl border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30"
+              className="w-1/2 rounded border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">

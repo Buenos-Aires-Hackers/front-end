@@ -149,7 +149,7 @@ export default function FulfillOrderModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl rounded-3xl border border-emerald-400/20 bg-[#050505] p-8 text-white shadow-[0_15px_60px_rgba(0,0,0,0.65)]"
+        className="w-full max-w-2xl rounded border border-emerald-400/20 bg-[#050505] p-8 text-white shadow-[0_15px_60px_rgba(0,0,0,0.65)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-6">
@@ -175,7 +175,7 @@ export default function FulfillOrderModal({
                   <img
                     src={listing.image_url}
                     alt={listing.title}
-                    className="h-16 w-16 rounded-lg object-cover"
+                    className="h-16 w-16 rounded object-cover"
                   />
                 )}
                 <div className="flex-1">
@@ -216,7 +216,7 @@ export default function FulfillOrderModal({
 
           {/* Error Message */}
           {error && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4">
+            <div className="rounded bg-red-500/10 border border-red-500/20 p-4">
               <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
@@ -226,7 +226,7 @@ export default function FulfillOrderModal({
             <Button
               type="button"
               onClick={onClose}
-              className="w-1/2 rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
+              className="w-1/2 rounded border border-white/10 bg-white/5 text-white hover:bg-white/10"
               variant="ghost"
             >
               Cancel
@@ -237,7 +237,7 @@ export default function FulfillOrderModal({
               disabled={
                 isFulfilling || !creatorAddress || !listing.url || !currentUser
               }
-              className="w-1/2 rounded-2xl border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30 disabled:opacity-50"
+              className="w-1/2 rounded border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30 disabled:opacity-50"
             >
               {isFulfilling ? (
                 <span className="flex items-center justify-center gap-2">

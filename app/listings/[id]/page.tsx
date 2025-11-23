@@ -58,7 +58,7 @@ export default function ListingPage() {
         <Navbar />
         <main className="container mx-auto px-4 py-8">
           <div className="text-center py-24">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded p-6 max-w-md mx-auto">
               <p className="text-red-800 font-medium">Error loading listing</p>
               <p className="text-red-600 text-sm mt-1">{error.message}</p>
               <Button
@@ -115,7 +115,7 @@ export default function ListingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Image Section */}
           <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 relative">
+            <div className="aspect-square overflow-hidden rounded bg-gray-100 relative">
               {listing.badge && (
                 <Badge className="absolute left-4 top-4 z-10" variant="default">
                   {listing.badge}

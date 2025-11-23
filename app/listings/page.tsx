@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 type OrderField = "created_at" | "price" | "rating" | "title";
-type SortOption = { value: OrderField; label: string; direction: "asc" | "desc" };
+type SortOption = {
+  value: OrderField;
+  label: string;
+  direction: "asc" | "desc";
+};
 
 const categories = [
   "All",
@@ -85,7 +89,7 @@ export default function AllListingsPage() {
                     );
                     if (option) setSelectedSort(option);
                   }}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {sortOptions.map((option, index) => (
                     <option

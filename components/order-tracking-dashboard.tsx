@@ -249,7 +249,7 @@ export default function OrderTrackingDashboard() {
               {filteredOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-white/5"
+                  className="flex items-center justify-between p-4 border border-white/10 rounded bg-white/5"
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

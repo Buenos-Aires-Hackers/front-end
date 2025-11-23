@@ -2,8 +2,10 @@
 
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
+import { customScrollbar } from "@/lib/scrollbar";
 import type { AccountOrder, Listing, UserAddress } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { useEffect, useMemo, useState } from "react";
 import { parseEther } from "viem";
@@ -319,7 +321,7 @@ export default function AccountPage() {
         {orders.map((order) => (
           <div
             key={order.id}
-            className="rounded-2xl border border-white/10 bg-black/30 p-4"
+            className="rounded border border-white/10 bg-black/30 p-4"
           >
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
@@ -393,7 +395,7 @@ export default function AccountPage() {
           return (
             <div
               key={request.id}
-              className="rounded-2xl border border-white/10 bg-black/30 p-4"
+              className="rounded border border-white/10 bg-black/30 p-4"
             >
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="flex-1  max-w-fit">
@@ -424,7 +426,7 @@ export default function AccountPage() {
                   {request.status === "available" && (
                     <button
                       onClick={() => handleDeleteRequest(request.id)}
-                      className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-900/20 transition-colors"
+                      className="text-red-400 hover:text-red-300 p-2 rounded hover:bg-red-900/20 transition-colors"
                       title="Delete request"
                     >
                       🗑️
@@ -457,7 +459,7 @@ export default function AccountPage() {
     <div className="min-h-screen bg-gradient-to-b from-[#050505] via-[#020202] to-black text-white">
       <Navbar />
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-12">
-        <div className="rounded-3xl border border-emerald-400/10 bg-black/40 p-6 shadow-[0_10px_60px_rgba(0,0,0,0.45)]">
+        <div className="rounded border border-emerald-400/10 bg-black/40 p-6 shadow-[0_10px_60px_rgba(0,0,0,0.45)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.4em] text-emerald-300">
@@ -466,7 +468,7 @@ export default function AccountPage() {
               <h1 className="mt-3 text-3xl font-semibold">
                 {currentUser?.full_name ||
                   data?.user?.full_name ||
-                  "Your EthStore profile"}
+                  "Your Profile"}
               </h1>
               <p className="text-sm text-zinc-500">
                 {walletAddress
@@ -491,7 +493,7 @@ export default function AccountPage() {
               {Object.entries(stats).map(([key, value]) => (
                 <div
                   key={key}
-                  className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 text-center"
+                  className="rounded border border-white/10 bg-black/30 px-5 py-4 text-center"
                 >
                   <p className="text-3xl font-semibold text-emerald-300">
                     {value}
@@ -509,14 +511,14 @@ export default function AccountPage() {
             </p>
           )}
           {error && (
-            <div className="mt-4 p-3 rounded-2xl bg-red-900/20 border border-red-400/20">
+            <div className="mt-4 p-3 rounded bg-red-900/20 border border-red-400/20">
               <p className="text-sm text-red-400">
                 Error: {error instanceof Error ? error.message : error}
               </p>
             </div>
           )}
           {zkError && (
-            <div className="mt-4 p-3 rounded-2xl bg-red-900/20 border border-red-400/20">
+            <div className="mt-4 p-3 rounded bg-red-900/20 border border-red-400/20">
               <p className="text-sm text-red-400">ZK Proof Error: {zkError}</p>
               <button
                 onClick={clearZkError}
@@ -527,7 +529,7 @@ export default function AccountPage() {
             </div>
           )}
           {currentStep && (
-            <div className="mt-4 p-3 rounded-2xl bg-emerald-900/20 border border-emerald-400/20">
+            <div className="mt-4 p-3 rounded bg-emerald-900/20 border border-emerald-400/20">
               <p className="text-sm text-emerald-200 flex items-center gap-2">
                 <div className="animate-spin w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full" />
                 {currentStep}
@@ -535,7 +537,7 @@ export default function AccountPage() {
             </div>
           )}
           {!walletAddress && (
-            <div className="mt-4 p-3 rounded-2xl bg-yellow-900/20 border border-yellow-400/20">
+            <div className="mt-4 p-3 rounded bg-yellow-900/20 border border-yellow-400/20">
               <p className="text-sm text-yellow-400">
                 Please connect your wallet to load your account information.
               </p>
@@ -546,7 +548,12 @@ export default function AccountPage() {
         {walletAddress && (
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Shopify Orders - New Order Tracking System */}
-            <section className="rounded-3xl border border-white/10 bg-black/40 p-6">
+            <section
+              className={cn(
+                "rounded max-h-[600px] overflow-y-auto border border-white/10 bg-black/40 p-6",
+                customScrollbar
+              )}
+            >
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Orders</h2>
                 <span className="text-sm text-zinc-500">
@@ -572,7 +579,7 @@ export default function AccountPage() {
                     {JSON.stringify(shopifyOrdersData?.data, null, 2)}
                   </p>
                   {zkError && (
-                    <div className="mt-3 p-2 rounded-lg bg-red-900/20 border border-red-400/20">
+                    <div className="mt-3 p-2 rounded bg-red-900/20 border border-red-400/20">
                       <p className="text-xs text-red-400">
                         ZK Error: {zkError}
                       </p>
@@ -584,7 +591,7 @@ export default function AccountPage() {
                   {shopifyOrdersData.data.orders.map((order) => (
                     <div
                       key={order.id}
-                      className="rounded-2xl border border-white/10 bg-black/30 p-4"
+                      className="rounded border border-white/10 bg-black/30 p-4"
                     >
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div className="flex-1">
@@ -623,7 +630,7 @@ export default function AccountPage() {
                                   )
                                 }
                                 disabled={isZkProcessing}
-                                className="rounded-2xl border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="rounded border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {isZkProcessing ? (
                                   <span className="flex items-center gap-2">
@@ -655,7 +662,12 @@ export default function AccountPage() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-white/10 bg-black/40 p-6">
+            <section
+              className={cn(
+                "rounded border max-h-[600px] border-white/10 bg-black/40 p-6",
+                customScrollbar
+              )}
+            >
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Active Listings</h2>
                 <span className="text-sm text-zinc-500">
@@ -711,7 +723,7 @@ function AddressFormSection({
   };
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-black/40 p-6">
+    <section className="rounded border border-white/10 bg-black/40 p-6">
       <div className="mb-6">
         <h2 className="text-xl font-semibold">Delivery address</h2>
         <p className="text-sm text-zinc-500">
@@ -729,7 +741,7 @@ function AddressFormSection({
             onChange={(e) =>
               setFormValues((prev) => ({ ...prev, full_name: e.target.value }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -745,7 +757,7 @@ function AddressFormSection({
                 address_line_1: e.target.value,
               }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -760,7 +772,7 @@ function AddressFormSection({
                 address_line_2: e.target.value,
               }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -773,7 +785,7 @@ function AddressFormSection({
             onChange={(e) =>
               setFormValues((prev) => ({ ...prev, city: e.target.value }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -788,7 +800,7 @@ function AddressFormSection({
                 state_province: e.target.value,
               }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -804,7 +816,7 @@ function AddressFormSection({
                 postal_code: e.target.value,
               }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -820,7 +832,7 @@ function AddressFormSection({
                 country: e.target.value,
               }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -832,7 +844,7 @@ function AddressFormSection({
             onChange={(e) =>
               setFormValues((prev) => ({ ...prev, phone: e.target.value }))
             }
-            className="w-full rounded-2xl border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full rounded border border-emerald-400/40 bg-black/40 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
@@ -841,7 +853,7 @@ function AddressFormSection({
           <Button
             type="submit"
             disabled={isSaving}
-            className="w-full rounded-2xl border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30"
+            className="w-full rounded border border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/30"
           >
             {isSaving ? "Saving..." : "Save address"}
           </Button>
