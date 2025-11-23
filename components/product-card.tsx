@@ -59,18 +59,10 @@ export default function ProductCard({
 
       <div className="flex flex-1 flex-col gap-4 px-6 pb-6 pt-5">
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">
-            Featured Item
-          </p>
           <h3 className="mt-1 text-2xl font-semibold tracking-tight">
             {title}
           </h3>
         </div>
-
-        <p className="line-clamp-2 text-zinc-400">
-          {description ||
-            "Discover premium drops sourced by the PayPunk community."}
-        </p>
 
         <div className="mt-auto space-y-3">
           <div className="flex items-baseline gap-3">
