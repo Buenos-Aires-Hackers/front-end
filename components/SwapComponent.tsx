@@ -1,16 +1,5 @@
-import { useState, useEffect } from "react";
-import { formatUnits, parseUnits, formatEther } from "viem";
-import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { enqueueSnackbar } from "notistack";
-import { ArrowDownUp, Loader2 } from "lucide-react";
-import {
-  CallbackType,
-  type CrossChainSdk,
-  type ExecCallback,
-} from "@eil-protocol/sdk";
-import { type AmbireMultiChainSmartAccount } from "@eil-protocol/accounts";
+import { CHAIN_IDS } from "@/app/config/wagmi";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -18,9 +7,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createEilSdk, fetchUSDCBalances, swapUSDC } from "@/lib/eil-sdk";
-import { CHAIN_IDS } from "@/app/config/wagmi";
+import { type AmbireMultiChainSmartAccount } from "@eil-protocol/accounts";
+import {
+  CallbackType,
+  type CrossChainSdk,
+  type ExecCallback,
+} from "@eil-protocol/sdk";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowDownUp, Loader2 } from "lucide-react";
+import { enqueueSnackbar } from "notistack";
+import { useEffect, useState } from "react";
+import { formatUnits, parseUnits } from "viem";
 
 const CHAIN_NAMES: Record<number, string> = {
   [CHAIN_IDS.BASE]: "Base",
@@ -74,10 +74,10 @@ export function SwapComponent() {
   });
 
   useEffect(() => {
-    if (balances) {
-      console.log("Base ETH balance:", formatEther(balances.balanceEth0));
-      console.log("Arbitrum ETH balance:", formatEther(balances.balanceEth1));
-    }
+    // if (balances) {
+    //   console.log("Base ETH balance:", formatEther(balances.balanceEth0));
+    //   console.log("Arbitrum ETH balance:", formatEther(balances.balanceEth1));
+    // }
   }, [balances]);
 
   const swapMutation = useMutation({
@@ -202,8 +202,8 @@ export function SwapComponent() {
             variant="outline"
             size="icon"
             onClick={() => {
-              setFromChain(toChain);
-              setToChain(fromChain);
+              setFromChain(toChain as any);
+              setToChain(fromChain as any);
             }}
             disabled={swapMutation.isPending}
           >
