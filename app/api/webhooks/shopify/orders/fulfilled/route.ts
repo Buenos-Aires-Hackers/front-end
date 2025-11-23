@@ -61,7 +61,10 @@ export async function POST(request: NextRequest) {
         processed: true,
       });
     } catch (error) {
-      console.warn(`Failed to add webhook event for order ${orderData.id}:`, error);
+      console.warn(
+        `Failed to add webhook event for order ${orderData.id}:`,
+        error
+      );
     }
 
     // Mark event as processed
