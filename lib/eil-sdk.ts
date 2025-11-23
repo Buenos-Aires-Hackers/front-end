@@ -1,7 +1,5 @@
-import { getClient } from "wagmi/actions";
-import { getAccount, getWalletClient, reconnect } from "@wagmi/core";
-import { getBalance, readContract, getBytecode } from "viem/actions";
-import { type WalletClient, zeroAddress, type Address, erc20Abi } from "viem";
+import { CHAIN_IDS, wagmiConfig } from "@/app/config/wagmi";
+import { AmbireMultiChainSmartAccount } from "@eil-protocol/accounts";
 import {
   AmbireBundlerManager,
   CrossChainSdk,
@@ -10,8 +8,10 @@ import {
   type ExecCallback,
   type IMultiChainSmartAccount,
 } from "@eil-protocol/sdk";
-import { AmbireMultiChainSmartAccount } from "@eil-protocol/accounts";
-import { wagmiConfig, CHAIN_IDS } from "@/app/config/wagmi";
+import { getAccount, getWalletClient, reconnect } from "@wagmi/core";
+import { erc20Abi, zeroAddress, type Address, type WalletClient } from "viem";
+import { getBalance, getBytecode, readContract } from "viem/actions";
+import { getClient } from "wagmi/actions";
 
 // @todo - move to external config with other constants
 const USDC_ADDRESSES: Record<number, Address> = {
@@ -89,7 +89,7 @@ export async function createEilSdk(): Promise<{
   console.log("Arbitrum RPC URL:", arbitrumConfig.publicClient.transport.url);
 
   const baseClient = getClient(wagmiConfig, { chainId: CHAIN_IDS.BASE });
-  const baseUsdcCode = await getBytecode(baseClient, {
+  const baseUsdcCode = await getBytecode(baseClient!, {
     address: USDC_ADDRESSES[CHAIN_IDS.BASE],
   });
   console.log(
