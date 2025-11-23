@@ -1,4 +1,5 @@
 import { orderService } from "@/lib/order-service";
+import { supabase } from "@/lib/supabase";
 import { OrderFulfilledPayload } from "@/lib/types/shopify-webhooks";
 import {
   logWebhookEvent,
@@ -29,9 +30,31 @@ export async function POST(request: NextRequest) {
       orderData.id
     );
 
+    // First, try to find the order in our system by order_id or checkout_id
+    const { data: existingOrder } = await supabase
+      .from("shopify_orders")
+      .select("shopify_order_id, shopify_checkout_id")
+      .or(
+        `shopify_order_id.eq.${orderData.id},shopify_checkout_id.eq.${orderData.id}`
+      )
+      .maybeSingle();
+
+    if (!existingOrder) {
+      console.warn(
+        `Order ${orderData.id} not found in our system, skipping fulfillment update`
+      );
+      return NextResponse.json({
+        success: true,
+        message: "Order not in our system, skipped",
+      });
+    }
+
+    const actualOrderId = existingOrder.shopify_order_id;
+    console.log(`Found order in system: ${actualOrderId}`);
+
     // Update order status to fulfilled
     const result = await orderService.updateOrderStatus(
-      orderData.id,
+      actualOrderId,
       "fulfilled",
       orderData.financial_status,
       orderData.fulfillment_status || "fulfilled"
@@ -54,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     // Add webhook event to order record (non-critical)
     try {
-      await orderService.addWebhookEvent(orderData.id, {
+      await orderService.addWebhookEvent(actualOrderId, {
         topic: "orders/fulfilled",
         event_id: headers!["x-shopify-event-id"],
         timestamp: new Date().toISOString(),
@@ -62,7 +85,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.warn(
-        `Failed to add webhook event for order ${orderData.id}:`,
+        `Failed to add webhook event for order ${actualOrderId}:`,
         error
       );
     }
@@ -71,7 +94,8 @@ export async function POST(request: NextRequest) {
     await markEventProcessed(headers!["x-shopify-event-id"]);
 
     console.log("Successfully processed order fulfilled webhook:", {
-      shopifyOrderId: orderData.id,
+      originalId: orderData.id,
+      actualOrderId: actualOrderId,
       fulfillmentStatus: orderData.fulfillment_status,
     });
 
@@ -87,3 +111,9 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
+
+
+
+
