@@ -1,4 +1,5 @@
 import { orderService } from "@/lib/order-service";
+import { getFulfillmentDetails } from "@/lib/shopify-fulfillment";
 import { supabase } from "@/lib/supabase";
 import { FulfillmentCreatedPayload } from "@/lib/types/shopify-webhooks";
 import {
@@ -6,7 +7,6 @@ import {
   markEventProcessed,
   validateWebhookRequest,
 } from "@/lib/webhook-utils";
-import { getFulfillmentDetails } from "@/lib/shopify-fulfillment";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -37,12 +37,16 @@ export async function POST(request: NextRequest) {
     // We need to fetch the fulfillment details from Shopify to get the correct order information
     console.log("Fetching fulfillment details using service...");
 
-    const fulfillmentResult = await getFulfillmentDetails(fulfillmentData.id.toString());
+    const fulfillmentResult = await getFulfillmentDetails(
+      fulfillmentData.id.toString()
+    );
 
     let actualOrderId: number;
 
     if (!fulfillmentResult.success) {
-      console.error(`Failed to fetch fulfillment details: ${fulfillmentResult.error}`);
+      console.error(
+        `Failed to fetch fulfillment details: ${fulfillmentResult.error}`
+      );
 
       // Try to find order using the original order_id as fallback
       console.log("Falling back to original order_id lookup...");

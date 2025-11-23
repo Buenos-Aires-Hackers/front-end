@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getFulfillmentDetails } from "@/lib/shopify-fulfillment";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fulfillmentId: string } }
+  context: { params: { fulfillmentId: string } }
 ) {
   try {
-    const { fulfillmentId } = params;
+    const { fulfillmentId } = context.params;
 
     if (!fulfillmentId) {
       return NextResponse.json(
@@ -19,10 +19,10 @@ export async function GET(
 
     if (!result.success) {
       return NextResponse.json(
-        { 
+        {
           error: "Fulfillment not found",
           fulfillmentId,
-          message: result.error
+          message: result.error,
         },
         { status: 404 }
       );
@@ -31,7 +31,7 @@ export async function GET(
     return NextResponse.json({
       success: true,
       fulfillment: result.data!.fulfillment,
-      order: result.data!.order
+      order: result.data!.order,
     });
   } catch (error) {
     console.error("Error fetching fulfillment details:", error);
