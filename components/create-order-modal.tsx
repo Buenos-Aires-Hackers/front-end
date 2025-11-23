@@ -153,7 +153,7 @@ export default function CreateOrderModal({
   } = useListListing();
 
   useEffect(() => {
-    if (!savedAddress) {
+    if (!savedAddress || !isOpen) {
       return;
     }
 
@@ -179,7 +179,7 @@ export default function CreateOrderModal({
           : prev.deliveryCountry,
       };
     });
-  }, [savedAddress]);
+  }, [savedAddress, isOpen]);
 
   if (!isOpen) return null;
 
