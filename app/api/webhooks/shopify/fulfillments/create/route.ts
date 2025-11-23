@@ -6,6 +6,7 @@ import {
   markEventProcessed,
   validateWebhookRequest,
 } from "@/lib/webhook-utils";
+import { getFulfillmentDetails } from "@/lib/shopify-fulfillment";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -26,31 +27,82 @@ export async function POST(request: NextRequest) {
     await logWebhookEvent("fulfillments/create", headers!, fulfillmentData);
 
     console.log(
-      "Processing fulfillment created webhook for order ID:",
+      "Processing fulfillment created webhook for fulfillment ID:",
+      fulfillmentData.id,
+      "with order_id field:",
       fulfillmentData.order_id
     );
 
-    // First, try to find the order in our system by order_id or checkout_id
-    const { data: existingOrder } = await supabase
-      .from("shopify_orders")
-      .select("shopify_order_id, shopify_checkout_id")
-      .or(
-        `shopify_order_id.eq.${fulfillmentData.order_id},shopify_checkout_id.eq.${fulfillmentData.order_id}`
-      )
-      .maybeSingle();
+    // The fulfillmentData.order_id might not match our database records
+    // We need to fetch the fulfillment details from Shopify to get the correct order information
+    console.log("Fetching fulfillment details using service...");
 
-    if (!existingOrder) {
-      console.warn(
-        `Order ${fulfillmentData.order_id} not found in our system, skipping fulfillment tracking`
+    const fulfillmentResult = await getFulfillmentDetails(fulfillmentData.id.toString());
+
+    let actualOrderId: number;
+
+    if (!fulfillmentResult.success) {
+      console.error(`Failed to fetch fulfillment details: ${fulfillmentResult.error}`);
+
+      // Try to find order using the original order_id as fallback
+      console.log("Falling back to original order_id lookup...");
+      const { data: fallbackOrder } = await supabase
+        .from("shopify_orders")
+        .select("shopify_order_id, shopify_checkout_id")
+        .or(
+          `shopify_order_id.eq.${fulfillmentData.order_id},shopify_checkout_id.eq.${fulfillmentData.order_id}`
+        )
+        .maybeSingle();
+
+      if (!fallbackOrder) {
+        console.warn(
+          `Could not fetch fulfillment details and order ${fulfillmentData.order_id} not found in our system`
+        );
+        return NextResponse.json({
+          success: true,
+          message: "Order not in our system, skipped",
+        });
+      }
+
+      actualOrderId = fallbackOrder.shopify_order_id;
+      console.log(`Using fallback order: ${actualOrderId}`);
+    } else {
+      const fulfillmentDetails = fulfillmentResult.data!;
+      console.log("Fulfillment details:", fulfillmentDetails);
+
+      // Now find the order in our system using the correct order information
+      const shopifyOrderId = parseInt(fulfillmentDetails.order.id);
+      const shopifyCheckoutId = fulfillmentDetails.order.checkout_id;
+
+      console.log(
+        `Looking for order with ID: ${shopifyOrderId}, checkout ID: ${shopifyCheckoutId}`
       );
-      return NextResponse.json({
-        success: true,
-        message: "Order not in our system, skipped",
-      });
-    }
 
-    const actualOrderId = existingOrder.shopify_order_id;
-    console.log(`Found order in system: ${actualOrderId}`);
+      const { data: existingOrder } = await supabase
+        .from("shopify_orders")
+        .select("shopify_order_id, shopify_checkout_id")
+        .or(
+          `shopify_order_id.eq.${shopifyOrderId}${
+            shopifyCheckoutId
+              ? `,shopify_checkout_id.eq.${shopifyCheckoutId}`
+              : ""
+          }`
+        )
+        .maybeSingle();
+
+      if (!existingOrder) {
+        console.warn(
+          `Order ${shopifyOrderId} not found in our system, skipping fulfillment tracking`
+        );
+        return NextResponse.json({
+          success: true,
+          message: "Order not in our system, skipped",
+        });
+      }
+
+      actualOrderId = existingOrder.shopify_order_id;
+      console.log(`Found order in system: ${actualOrderId}`);
+    }
 
     // Create fulfillment tracking record
     const trackingRecord = {
