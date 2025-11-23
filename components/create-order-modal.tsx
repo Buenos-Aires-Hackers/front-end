@@ -114,7 +114,7 @@ const buildPrivateCredentialsInput = (
 
   return {
     fullName: savedAddress?.full_name || connectedAddress || "PayPunk Shopper",
-    emailAddress: "",
+    emailAddress: "asd@example.com",
     homeAddress:
       combinedSavedAddress ||
       parsedAddress.homeAddress ||
