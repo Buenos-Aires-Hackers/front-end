@@ -52,13 +52,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add webhook event to order record
-    await orderService.addWebhookEvent(orderData.id, {
-      topic: "orders/cancelled",
-      event_id: headers!["x-shopify-event-id"],
-      timestamp: new Date().toISOString(),
-      processed: true,
-    });
+    // Add webhook event to order record (non-critical)
+    try {
+      await orderService.addWebhookEvent(orderData.id, {
+        topic: "orders/cancelled",
+        event_id: headers!["x-shopify-event-id"],
+        timestamp: new Date().toISOString(),
+        processed: true,
+      });
+    } catch (error) {
+      console.warn(`Failed to add webhook event for order ${orderData.id}:`, error);
+    }
 
     // Mark event as processed
     await markEventProcessed(headers!["x-shopify-event-id"]);

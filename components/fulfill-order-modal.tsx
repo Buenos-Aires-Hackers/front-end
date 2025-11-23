@@ -76,9 +76,7 @@ export default function FulfillOrderModal({
       const cartResponse = await createCart({
         productVariantId: variantId,
         quantity: 1,
-        email: creatorAddress.full_name
-          ? `${creatorAddress.full_name}@example.com`
-          : undefined,
+        email: "adsadsad@example.com",
         phone: creatorAddress.phone || undefined,
         countryCode: getCountryCode(creatorAddress.country || ""),
         listingId: listing.id.toString(), // For order tracking

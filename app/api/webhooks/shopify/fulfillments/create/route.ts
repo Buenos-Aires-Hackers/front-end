@@ -63,21 +63,36 @@ export async function POST(request: NextRequest) {
 
     // Update order status to fulfilled if appropriate
     if (fulfillmentData.status === "success") {
-      await orderService.updateOrderStatus(
+      const updateResult = await orderService.updateOrderStatus(
         fulfillmentData.order_id,
         "fulfilled",
         undefined,
         "fulfilled"
       );
+      
+      if (!updateResult.success) {
+        console.warn(
+          `Failed to update order status for ${fulfillmentData.order_id}: ${updateResult.error}`
+        );
+        // Continue processing - this is not a critical failure
+      }
     }
 
-    // Add webhook event to order record
-    await orderService.addWebhookEvent(fulfillmentData.order_id, {
-      topic: "fulfillments/create",
-      event_id: headers!["x-shopify-event-id"],
-      timestamp: new Date().toISOString(),
-      processed: true,
-    });
+    // Add webhook event to order record (non-critical)
+    try {
+      await orderService.addWebhookEvent(fulfillmentData.order_id, {
+        topic: "fulfillments/create",
+        event_id: headers!["x-shopify-event-id"],
+        timestamp: new Date().toISOString(),
+        processed: true,
+      });
+    } catch (error) {
+      console.warn(
+        `Failed to add webhook event for order ${fulfillmentData.order_id}:`,
+        error
+      );
+      // Continue processing - this is not a critical failure
+    }
 
     // Mark event as processed
     await markEventProcessed(headers!["x-shopify-event-id"]);

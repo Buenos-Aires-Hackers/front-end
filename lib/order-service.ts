@@ -68,12 +68,20 @@ export class OrderService {
         .from("shopify_orders")
         .select("webhook_events")
         .eq("shopify_order_id", shopifyOrderId)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error(
           "Error fetching current order for webhook event:",
           fetchError
+        );
+        return;
+      }
+
+      // If no order exists, skip adding webhook event (order not in our system)
+      if (!currentOrder) {
+        console.warn(
+          `Order ${shopifyOrderId} not found in system, skipping webhook event`
         );
         return;
       }

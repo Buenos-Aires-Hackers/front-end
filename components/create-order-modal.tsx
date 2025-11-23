@@ -1,6 +1,11 @@
 "use client";
 
+import {
+  useCreatePrivateCredentials,
+  type PrivateCredentialsInput,
+} from "@/app/hooks/useCreatePrivateCredentials";
 import { useCreateListing } from "@/app/hooks/useListingMutations";
+import { useListListing } from "@/app/hooks/useListListing";
 import { useOrderCreatorAddress } from "@/app/hooks/useOrderCreatorAddress";
 import { useShopifyProduct } from "@/app/hooks/useShopifyProduct";
 import { Button } from "@/components/ui/button";
@@ -8,6 +13,8 @@ import { humanizeShopifyHandle } from "@/lib/shopify";
 import type { UserAddress } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
+import { parseUnits } from "viem";
+import type { Address } from "viem";
 
 interface CreateOrderModalProps {
   isOpen: boolean;
@@ -29,6 +36,10 @@ const DEFAULT_FORM: FormValues = {
   deliveryAddress: "",
   deliveryCountry: "",
 };
+
+const PAYMENT_TOKEN_DECIMALS = Number(
+  process.env.NEXT_PUBLIC_PAYMENT_TOKEN_DECIMALS ?? "6"
+);
 
 const formatSavedAddress = (address: UserAddress) => {
   const parts = [
@@ -65,6 +76,48 @@ const formatShopifyPrice = (amount?: string, currency?: string) => {
   }
 };
 
+const parseDeliveryAddress = (raw: string): { homeAddress: string; city: string } => {
+  if (!raw) {
+    return { homeAddress: "", city: "" };
+  }
+
+  const [street, ...rest] = raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return {
+    homeAddress: street || raw.trim(),
+    city: rest.join(", "),
+  };
+};
+
+const buildPrivateCredentialsInput = (
+  savedAddress: UserAddress | null,
+  formValues: FormValues,
+  connectedAddress?: string
+): PrivateCredentialsInput => {
+  const parsedAddress = parseDeliveryAddress(formValues.deliveryAddress);
+  const combinedSavedAddress = [savedAddress?.address_line_1, savedAddress?.address_line_2]
+    .filter(Boolean)
+    .join(", ");
+
+  return {
+    fullName:
+      savedAddress?.full_name ||
+      connectedAddress ||
+      "EthStore Shopper",
+    emailAddress: "",
+    homeAddress:
+      combinedSavedAddress ||
+      parsedAddress.homeAddress ||
+      formValues.deliveryAddress,
+    city: savedAddress?.city || parsedAddress.city || "",
+    country: savedAddress?.country || formValues.deliveryCountry,
+    zip: savedAddress?.postal_code || "",
+  };
+};
+
 export default function CreateOrderModal({
   isOpen,
   onClose,
@@ -76,6 +129,18 @@ export default function CreateOrderModal({
   const { createListing, isCreating } = useCreateListing();
   const { fetchProduct, isFetchingProduct } = useShopifyProduct();
   const { address: savedAddress } = useOrderCreatorAddress(connectedAddress);
+  const {
+    createPrivateCredentials,
+    isLoading: isCreatingCredentials,
+    reset: resetCredentialsState,
+  } = useCreatePrivateCredentials();
+  const {
+    list,
+    waitForReceipt,
+    isWriting,
+    isConfirming,
+    reset: resetListState,
+  } = useListListing();
 
   useEffect(() => {
     if (!savedAddress) {
@@ -123,6 +188,26 @@ export default function CreateOrderModal({
     }
 
     try {
+      const shopperAddress = connectedAddress as Address;
+      const privateCredentialsInput = buildPrivateCredentialsInput(
+        savedAddress,
+        formValues,
+        connectedAddress
+      );
+      const privateCredentials = await createPrivateCredentials(
+        privateCredentialsInput
+      );
+      const amount = parseUnits(
+        (formValues.price || "0").trim() || "0",
+        PAYMENT_TOKEN_DECIMALS
+      );
+      const transactionHash = await list({
+        url: formValues.url,
+        amount,
+        shopper: shopperAddress,
+        privateCredentials,
+      });
+      const transactionReceipt = await waitForReceipt(transactionHash);
       const normalizedPrice = formatUserPrice(formValues.price);
       const product = await fetchProduct(formValues.url);
       const listing = await createListing({
@@ -137,14 +222,20 @@ export default function CreateOrderModal({
         ),
         image_url: product.imageUrl,
         url: formValues.url,
-        ordered_by: connectedAddress?.toLowerCase(),
+        ordered_by: connectedAddress.toLowerCase(),
         in_stock: true,
         badge: "New",
       });
 
-      onSuccess(`Created order for ${listing.title}.`);
+      const previewHash = `${transactionReceipt.transactionHash.slice(
+        0,
+        10
+      )}...`;
+      onSuccess(`Created order for ${listing.title}. Tx ${previewHash}`);
       onClose();
       setFormValues(DEFAULT_FORM);
+      resetListState();
+      resetCredentialsState();
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : "Failed to create listing."
@@ -155,10 +246,26 @@ export default function CreateOrderModal({
   const handleClose = () => {
     setFormError(null);
     setFormValues(DEFAULT_FORM);
+    resetListState();
+    resetCredentialsState();
     onClose();
   };
 
-  const isSubmitting = isCreating || isFetchingProduct;
+  const isSubmitting =
+    isCreating ||
+    isFetchingProduct ||
+    isCreatingCredentials ||
+    isWriting ||
+    isConfirming;
+
+  const getSubmitLabel = () => {
+    if (isCreatingCredentials) return "Encrypting delivery data...";
+    if (isWriting) return "Confirm in wallet...";
+    if (isConfirming) return "Waiting for confirmation...";
+    if (isFetchingProduct) return "Fetching product...";
+    if (isCreating) return "Saving listing...";
+    return "Create listing";
+  };
 
   return (
     <div
@@ -274,7 +381,7 @@ export default function CreateOrderModal({
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {isFetchingProduct ? "Fetching product..." : "Creating..."}
+                  {getSubmitLabel()}
                 </span>
               ) : (
                 "Create listing"

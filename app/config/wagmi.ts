@@ -60,14 +60,14 @@ const appNetworks: [AppKitNetwork, ...AppKitNetwork[]] = [
   // network0,
   // network1,
   // Include other common networks
-  mainnet,
-  base,
-  arbitrum,
-  optimism,
-  sepolia,
-  arbitrumSepolia,
+  // mainnet,
+  // base,
+  // arbitrum,
+  // optimism,
+  // sepolia,
+  // arbitrumSepolia,
   baseSepolia,
-  optimismSepolia,
+  // optimismSepolia,
   // .filter((net) => net.id !== network0.id && net.id !== network1.id),
 ] as [AppKitNetwork, ...AppKitNetwork[]];
 
@@ -82,14 +82,14 @@ const chainConfig = getMultiChainConfig();
 
 // Add default transports for other common networks
 const defaultNetworks = [
-  mainnet,
-  arbitrum,
-  base,
-  optimism,
-  sepolia,
-  arbitrumSepolia,
+  // mainnet,
+  // arbitrum,
+  // base,
+  // optimism,
+  // sepolia,
+  // arbitrumSepolia,
   baseSepolia,
-  optimismSepolia,
+  // optimismSepolia,
 ];
 defaultNetworks.forEach((network) => {
   if (!transports[network.id]) {
