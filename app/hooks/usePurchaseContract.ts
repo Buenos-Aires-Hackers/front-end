@@ -83,7 +83,7 @@ export const useCalculateId = (
           abi: depositContract,
           address: contractAddress,
           functionName: "calculateId",
-          //@ts-ignore
+          //@ts-expect-error
           args: [newListing] as const,
         });
 

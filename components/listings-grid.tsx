@@ -143,7 +143,7 @@ export default function ListingsGrid({
         {filteredListings.map((listing) => (
           <div
             key={listing.id}
-            onClick={() => handleViewListing(listing.id)}
+            // onClick={() => handleViewListing(listing.id)}
             className="cursor-pointer transition-transform duration-300 hover:-translate-y-2"
           >
             <ProductCard
