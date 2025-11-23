@@ -17,6 +17,11 @@ import { getMultiChainConfig } from "@eil-protocol/sdk";
 
 const projectId = "c9437a7e96f6cdcc1c201c39e6a08d47";
 
+export const CHAIN_IDS = {
+  BASE: 8453,
+  ARBITRUM: 42161,
+} as const;
+
 /**
  * Helper function to get chain deployment by chain ID.
  */
