@@ -1,240 +1,205 @@
-# EthStore - Decentralized Marketplace with Shopify Integration
+<h1 align="center">
+💳🤘 PayPunk 🤘💳
+</h1>
 
-A Web3 marketplace where users can create purchase requests and have them fulfilled by other users through Shopify checkout integration.
+<h4 align="center">
+  <p align="center">
+    <img src="./assets/logo.webp" alt="PayPunk Logo" width="300" height="auto">
+  </p>
+</h4>
 
-## Features
+## About 🎸
 
-### 🛒 **Dual-Role Order System**
+**PayPunk** is the decentralized marketplace that's **actually** bridging crypto to real-world physical goods. No more routing through Visa cards and reintroducing the banking system crypto was supposed to replace. We're cutting out the middleman and doing it right. 🚀
 
-- **Requesters**: Create listings with delivery details and offer prices
-- **Fulfillers**: Browse listings and fulfill orders through Shopify checkout
-- Automatic address prefill from requester's profile
+### The Problem 😤
 
-### 💳 **Shopify Integration**
+Right now, **every single** payment solution from crypto to real-world physical goods gets routed through Visa cards. That's right - we're using crypto to escape traditional finance, only to route it back through the same centralized systems we were trying to escape. It's backwards, it's broken, and it's time to fix it. 💸
 
-- Seamless checkout experience with Shopify Storefront API
-- Auto-prefilled delivery addresses from order creator
-- Product variant detection from URLs
-- Real-time cart creation with buyer preferences
+### The Solution 🔥
 
-### 🔗 **Web3 Features**
+PayPunk enables **true** crypto-to-physical-goods transactions through a trustless, decentralized escrow system powered by zero-knowledge proofs and cross-chain interoperability. No banks. No cards. Just pure, decentralized magic. ✨
 
-- Wallet-based authentication (WalletConnect, MetaMask, etc.)
-- Cross-chain support (Ethereum, Base, Arbitrum, Optimism)
-- On-chain order tracking and fulfillment status
+## How It Works 🎯
 
-### 📦 **Order Management**
+### 1. **Create a Listing** 📝✨
+Users upload a listing and specify:
+- 🛍️ What they want to buy (from Shopify)
+- 💰 How much they're willing to pay in USDC (with a slight premium for the service)
+- 🔐 Their private delivery credentials (encrypted, obviously)
 
-- Real-time fulfillment status tracking
-- Order history for both buyers and fulfillers
-- Automated reward system for successful fulfillments
+### 2. **Lock Funds** 🔒💎
+Once a listing is created, the user's USDC gets deposited and locked into our **[EVVM](https://www.evvm.org/)** (Ethereum Virtual Machine Virtual Machine) contract. The funds stay locked in escrow until the purchase is verified - no funny business. 🎪
 
-## Architecture
+### 3. **Browse & Purchase** 🛒🎁
+Anyone can browse available listings and decide to fulfill a purchase. The buyer uses their own payment method (credit card, debit card, or whatever works) to purchase the item from Shopify and have it delivered to the original requester. Simple as that. 🎉
 
-### **Fulfillment Flow**
+### 4. **Prove Purchase & Delivery** ✅🔍
+After completing the purchase and ensuring delivery, the buyer uploads a **zero-knowledge proof** generated from **[vlayer](https://www.vlayer.xyz/)** that cryptographically verifies:
+- ✅ The purchase was made
+- 📦 The item was delivered to the correct recipient
 
-1. **Requester** creates a listing with:
+All without revealing sensitive details. Privacy-first, baby! 🕵️‍♂️
 
-   - Product URL (Shopify store)
-   - Delivery address
-   - Offer price
-   - Connected wallet address
+### 5. **Unlock & Transfer** 💰🚀
+Once the ZK proof is submitted and verified on our contract, the locked funds unlock and become withdrawable **only** by the buyer (the person who fulfilled the purchase). Fair is fair. ⚖️
 
-2. **Fulfiller** clicks "Fulfill" and:
+### 6. **Automated Payout** 🤖⚡
+When funds are unlocked, a background bot catches this event and automatically pays out the tokens to the new owner using **x402**. Seamless, automated, and beautiful. 🎨
 
-   - Views order details and delivery address
-   - System fetches product variant from URL
-   - Creates Shopify cart with prefilled address
-   - Opens checkout in new tab
-   - Order status tracked in database
+## Cross-Chain Support 🌉🌍
 
-3. **Order Tracking**:
-   - `fulfiller_processing` → `shipped` → `delivered` → `completed`
-   - Automatic reward calculations
-   - Status updates and notifications
+PayPunk meets users where they're at. Users can create listings from **any chain** using **any token**. Through the **[Ethereum Interoperability Layer (EIL)](https://blog.ethereum.org/2025/11/18/eil)**, PayPunk automatically:
+- 🔄 Swaps tokens to the required payment token
+- 🌉 Bridges assets across chains
+- 📋 Lists your request seamlessly
 
-### **Tech Stack**
+No more being locked into one chain or one token. Freedom, baby! 🗽
 
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Web3**: WalletConnect, Wagmi, Viem
-- **Database**: Supabase (PostgreSQL)
-- **E-commerce**: Shopify Storefront API
-- **State Management**: TanStack Query
+## Technology Stack 🛠️⚡
 
-## Setup
+### Core Technologies 🔧
 
-### Prerequisites
+- **[EVVM](https://www.evvm.org/) (Ethereum Virtual Machine Virtual Machine)** 🎪: Our secure escrow contract for locking and managing funds. We've built a custom EVVM service that handles the entire escrow lifecycle, from deposit to withdrawal, with async nonce support for efficient transaction processing. It's like a blockchain within a blockchain. Mind-blowing stuff. 🧠
+- **[vlayer](https://www.vlayer.xyz/)** 🔐: Zero-knowledge proof generation and verification for purchase and delivery confirmation. We use vlayer's Web Prover Server to generate ZK proofs that verify purchase and delivery without revealing sensitive information. Privacy-preserving verification at its finest. 🎭
+- **x402** 🤖: Automated token payout system for seamless transfers when funds are unlocked. Set it and forget it. 🚀
+- **[EIL (Ethereum Interoperability Layer)](https://blog.ethereum.org/2025/11/18/eil)** 🌉: Cross-chain token swaps and bridging infrastructure, enabling users to list from any chain with any token. Chain abstraction done right. 🎯
 
-- Node.js 18+
-- Supabase account and project
-- Shopify store with Storefront API access
-- WalletConnect Project ID (optional)
+### Smart Contracts 📜
 
-### Installation
+- **Treasury.sol** 💼: The main contract handling deposits, withdrawals, listing creation, and purchase verification. It's the brain of the operation. 🧠
+- **[EVVM](https://www.evvm.org/) Integration** 🎪: Our custom EVVM service for secure, scalable fund management. Virtual blockchain magic. ✨
+- **RISC Zero & [vlayer](https://www.vlayer.xyz/) Verification** 🔍: ZK proof verification using RISC Zero verifier contracts combined with vlayer's Web Prover Server. We use vlayer to generate the proofs and RISC Zero to verify them on-chain. Trust, but verify - with style! 🛡️✨
 
-1. **Clone the repository**
+## Features 🎨
 
-   ```bash
-   git clone <repository-url>
-   cd ethglobal
-   ```
+- 🔐 **Trustless Escrow**: Funds are locked in a smart contract until delivery is proven. No trust needed. 🎯
+- 🔒 **Privacy-Preserving**: Private credentials are encrypted and only revealed when necessary. Your data, your control. 🛡️
+- ✅ **ZK-Proof Verification**: Cryptographic proof of purchase and delivery without revealing sensitive details. Math that protects you. 🔢
+- 🌉 **Multi-Chain Support**: List from any chain, pay with any token via [EIL](https://blog.ethereum.org/2025/11/18/eil). Chain-agnostic freedom. 🌍
+- 🤖 **Automated Payouts**: Background bot handles token transfers seamlessly via x402. Automation that works. ⚡
+- 💳 **Payment Flexibility**: Buyers can use any payment method (cards, crypto, etc.). Options, options, options. 🎁
 
-2. **Install dependencies**
+## Architecture 🏗️
 
-   ```bash
-   npm install
-   ```
+### Listing Flow 📝
+```
+User → Create Listing → Lock USDC in EVVM → Listing Published 🎉
+```
 
-3. **Environment Setup**
+### Purchase Flow 🛒
+```
+Buyer → Browse Listings → Purchase with Card → Generate ZK Proof (vlayer) → Submit Proof → Funds Unlocked → Auto Payout via x402 🚀
+```
 
-   ```bash
-   cp .env.example .env.local
-   ```
+### Cross-Chain Flow 🌉
+```
+User (Chain A, Token X) → EIL Swap & Bridge → USDC on Target Chain → Listing Created ✨
+```
 
-   Fill in your environment variables:
+## Bounties & Grants 🏆🎯
 
-   ```env
-   # Supabase
-   NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+### [EVVM](https://www.evvm.org/) - Your Custom Service or EVVM Chain ⚙️🎪
+**Track**: Custom Service or EVVM Chain
 
-   # Shopify (Required for fulfillment)
-   NEXT_PUBLIC_SHOPIFY_STORE_NAME=your-store-name
-   NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN=your-storefront-access-token
-   ```
+We've built a **custom [EVVM](https://www.evvm.org/) service** that handles the entire escrow lifecycle for PayPunk. Our Treasury contract integrates with our custom EVVM to provide:
+- 🔒 Secure fund locking and unlocking
+- ⚡ Async nonce support for efficient transaction processing
+- 🎯 Full control over the escrow mechanism
 
-4. **Database Setup**
+**Deployment**: 
+- Treasury Contract: See deployments section below 📍
 
-   - Import the database schema from `DATABASE_SCHEMA.md`
-   - Run migrations in your Supabase project
-   - Enable Row Level Security (RLS)
+### [vlayer](https://www.vlayer.xyz/) - Best ZK Proving dApp 🧠🔐
+**Track**: Best ZK Proving dApp
 
-5. **Shopify Configuration**
-   - Create a Shopify store or use existing one
-   - Generate Storefront API access token
-   - Ensure products have proper handles/URLs
+PayPunk uses [vlayer](https://www.vlayer.xyz/)'s Web Prover Server to generate zero-knowledge proofs that verify:
+- ✅ Purchase confirmation from Shopify
+- 📦 Delivery verification to the correct recipient
+- 🔒 Privacy-preserving verification without exposing sensitive user data
 
-### Development
+Our implementation uses both the Prover and Verifier smart contracts, with RISC Zero contract deployment for on-chain verification. ZK magic in action! ✨
+
+### Ethereum Foundation - Best use of the [EIL](https://blog.ethereum.org/2025/11/18/eil) SDK 🧱🌉
+**Track**: Best use of the EIL SDK
+
+PayPunk leverages the [EIL](https://blog.ethereum.org/2025/11/18/eil) SDK to enable **seamless cross-chain token movement**. Users can create listings from any chain using any token, and PayPunk automatically:
+- 🔄 Swaps tokens to USDC using [EIL](https://blog.ethereum.org/2025/11/18/eil)
+- 🌉 Bridges assets across multiple L2 chains
+- 🎨 Provides a seamless UX regardless of the user's chain or token preference
+
+This demonstrates **true chain abstraction**, allowing users to interact with PayPunk from any Ethereum-compatible chain without friction. No more chain lock-in! 🗽
+
+## Getting Started 🚀
+
+### Prerequisites 📋
+
+- 📦 Node.js and npm/yarn
+- 🔨 Foundry (for smart contract development)
+- 🎪 Access to [EVVM](https://www.evvm.org/) for custom EVVM deployment
+- 🔐 [vlayer](https://www.vlayer.xyz/) API access (for ZK proof generation)
+- 🌉 [EIL](https://blog.ethereum.org/2025/11/18/eil) SDK for cross-chain operations
+
+### Installation 💻
 
 ```bash
-npm run dev
+# Clone the repository
+git clone <repository-url>
+cd cyphermarket
+
+# Install dependencies
+npm install
+
+# Compile contracts
+forge build
+
+# Run tests
+forge test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app.
+### Deployment 🚀
 
-## Key Components
-
-### **Core Hooks**
-
-- `useOrderCreatorAddress` - Fetches delivery address from wallet
-- `useShopifyCart` - Creates Shopify carts with prefilled data
-- `useFulfillmentMutations` - Manages order creation and updates
-- `useFulfillmentOrders` - Fetches orders by role/status
-
-### **Main Components**
-
-- `FulfillOrderModal` - Order fulfillment interface
-- `CreateOrderModal` - Request creation interface
-- `ProductCard` - Listing display with fulfill action
-- `ListingsGrid` - Browse all available listings
-
-### **Database Schema**
-
-See `DATABASE_SCHEMA.md` for detailed information about:
-
-- User management with wallet integration
-- Listing and order structures
-- Role-based permissions (buyer/fulfiller)
-- Order status workflow
-- Address management
-
-## API Integration
-
-### **Shopify Storefront API**
-
-```typescript
-// Example: Creating a cart with prefilled address
-const cartResponse = await createCart({
-  productVariantId: "gid://shopify/ProductVariant/123",
-  quantity: 1,
-  email: "user@example.com",
-  countryCode: "US",
-  deliveryAddress: {
-    firstName: "John",
-    lastName: "Doe",
-    address1: "123 Main St",
-    city: "New York",
-    province: "NY",
-    country: "US",
-    zip: "10001",
-  },
-});
+```bash
+# Deploy to Base Sepolia testnet using EVVM init script
+./evvm-init.sh
 ```
 
-### **Database Operations**
+This script handles the full deployment process including EVVM setup and contract deployment. 🎯
 
-```typescript
-// Example: Creating fulfillment order
-await createFulfillmentOrder({
-  listingId: 123,
-  fulfillerId: "0x123...",
-  checkoutUrl: "https://checkout.shopify.com/...",
-  status: "fulfiller_processing",
-});
-```
+### Testnet Deployments 🧪
 
-## Deployment
+**Base Sepolia** 🎯:
+- 💼 Treasury: See `deployments/84532/` for latest addresses
+- 🎪 [EVVM](https://www.evvm.org/) Integration: Custom EVVM service deployed for escrow management
 
-### **Vercel (Recommended)**
+_Mainnet deployment addresses will be added after launch_ 🚀
 
-1. Connect your GitHub repository
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push to main
+## Future Enhancements 🔮
 
-### **Other Platforms**
+- 🛍️ Support for additional e-commerce platforms beyond Shopify
+- 🔍 Enhanced ZK proof schemas for more complex verification scenarios
+- ⭐ Reputation system for buyers and sellers
+- 📦 Multi-item batch purchases
+- 💳 Integration with additional payment rails
+- 📱 Mobile app for seamless on-the-go purchases
 
-- Ensure Node.js 18+ runtime
-- Set environment variables
-- Run `npm run build` and `npm start`
+## License 📜
 
-## Contributing
+This project is licensed under the EVVM-NONCOMMERCIAL-1.0 License.  
+Full license terms available at: https://www.evvm.info/docs/EVVMNoncommercialLicense
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+## Contributing 🤝
 
-## License
+Contributions are welcome! Please feel free to submit a Pull Request. Let's build something awesome together! 🚀
 
-MIT License - see LICENSE file for details
+## Team 👥
+
+Built with ❤️🔥 by the PayPunk team:
+
+- [@NevvDevv](https://x.com/NevvDevv) 🚀
+- [@nhestrompia](https://x.com/nhestrompia) 💻
+- [@0xjsieth](https://x.com/0xjsieth) ⚡
 
 ---
 
-## Troubleshooting
-
-### **Common Issues**
-
-**Shopify Integration:**
-
-- Verify store name and access token
-- Ensure products have valid handles
-- Check Storefront API permissions
-
-**Database:**
-
-- Confirm RLS policies are enabled
-- Verify table relationships and foreign keys
-- Check user permissions
-
-**Web3:**
-
-- Ensure wallet is connected
-- Verify network compatibility
-- Check WalletConnect configuration
-
-### **Support**
-
-- Check the issues section for common problems
-- Review database schema documentation
-- Verify environment variable setup
+**PayPunk**: Decentralizing payments, one purchase at a time. 💳✨🤘
